@@ -1,7 +1,7 @@
 {
   "name": "@gcf-tools/cli",
   "version": "0.0.0",
-  "description": "Tools for streamlined development of Google Cloud Functions",
+  "description": "CLI for streamlined development of Google Cloud Functions",
   "keywords": [
     "GCF",
     "GCP",
