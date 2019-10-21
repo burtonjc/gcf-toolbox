@@ -1,0 +1,129 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "https://angular.io/schemas/cli-1/schema",
+  "title": "Angular CLI Configuration",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "Google Cloud Platform project ID"
+    },
+    "resources": {
+      "type": "object",
+      "$ref": "#/definitions/resources"
+    }
+  },
+  "definitions": {
+    "resources": {
+      "type": "object",
+      "properties": {
+        "functions": {
+          "description": "Google Cloud Function definitions",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/function"
+          },
+          "default": [
+
+          ]
+        }
+      }
+    },
+    "function": {
+      "properties": {
+        "entryPoint": {
+          "type": "string",
+          "description": "Name of the function as it is exported by the module. Only needed if it is different than `name`."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the function as it will appear in the GCP console"
+        },
+        "runtime": {
+          "type": "string",
+          "description": "Runtime in which to run the function",
+          "enum": ["nodejs8", "nodejs10"]
+        },
+        "source": {
+          "type": "string",
+          "description": "Location of source code to deploy"
+        },
+        "trigger": {
+          "oneOf": [
+            { "$ref": "#/definitions/cloud-event-trigger" },
+            { "$ref": "#/definitions/http-trigger" },
+            { "$ref": "#/definitions/pubsub-trigger" },
+            { "$ref": "#/definitions/storage-trigger" }
+          ]
+        }
+      },
+      "required": ["name", "runtime"]
+    },
+    "cloud-event-trigger": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "type": "string",
+          "description": "Event on `resource` that triggers this function.",
+          "enum": [
+            "google.pubsub.topic.publish",
+            "google.storage.object.archive",
+            "google.storage.object.delete",
+            "google.storage.object.finalize",
+            "google.storage.object.metadataUpdate",
+            "providers/cloud.firestore/eventTypes/document.create",
+            "providers/cloud.firestore/eventTypes/document.delete",
+            "providers/cloud.firestore/eventTypes/document.update",
+            "providers/cloud.firestore/eventTypes/document.write",
+            "providers/cloud.pubsub/eventTypes/topic.publish",
+            "providers/cloud.storage/eventTypes/object.change",
+            "providers/google.firebase.analytics/eventTypes/event.log",
+            "providers/google.firebase.database/eventTypes/ref.create",
+            "providers/google.firebase.database/eventTypes/ref.delete",
+            "providers/google.firebase.database/eventTypes/ref.update",
+            "providers/google.firebase.database/eventTypes/ref.write"
+          ]
+        },
+        "resource": {
+          "type": "string",
+          "description": "Cloud resource that triggers this function.",
+          "enum": [
+            "cloud.pubsub",
+            "cloud.storage",
+            "google.firebase.analytics.event",
+            "google.firebase.database.ref",
+            "google.firestore.document"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": ["event", "resource"]
+    },
+    "http-trigger": {
+      "type": "string",
+      "enum": ["http"]
+    },
+    "pubsub-trigger": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "description": "PubSub topic that triggers this function."
+        }
+      },
+      "additionalProperties": false,
+      "required": ["topic"]
+    },
+    "storage-trigger": {
+      "type": "object",
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "description": "Storage bucket that triggers this function."
+        }
+      },
+      "additionalProperties": false,
+      "required": ["bucket"]
+    }
+  }
+}

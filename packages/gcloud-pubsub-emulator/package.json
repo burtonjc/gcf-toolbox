@@ -11,8 +11,8 @@
   "author": "Jacob Burton <burtonjc35@gmail.com>",
   "homepage": "https://github.com/burtonjc/gcf-tools#readme",
   "license": "MIT",
-  "main": "lib/gcloud-pubsub-emulator.js",
-  "typings": "lib/gcloud-pubsub-emulator.d.js",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.js",
   "directories": {
     "lib": "lib"
   },
