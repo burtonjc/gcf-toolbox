@@ -1,4 +1,4 @@
-# `@gcf-tools/gcloud-functions``
+# `@gcf-tools/gcloud-functions`
 
 > Wrapper around gcloud functions commands to easily interact with GCF from NodeJS
 
