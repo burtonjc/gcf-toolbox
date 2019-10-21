@@ -1,0 +1,38 @@
+{
+  "name": "@gcf-tools/cli",
+  "version": "0.0.0",
+  "description": "Tools for streamlined development of Google Cloud Functions",
+  "keywords": [
+    "GCF",
+    "GCP",
+    "Functions"
+  ],
+  "author": "Jacob Burton <burtonjc35@gmail.com>",
+  "homepage": "https://github.com/burtonjc/gcf-tools#readme",
+  "license": "MIT",
+  "main": "lib/cli.js",
+  "typings": "lib/cli.d.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/burtonjc/gcf-tools.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "prebuild": "npm run clean",
+    "test": "npx jest"
+  },
+  "bugs": {
+    "url": "https://github.com/burtonjc/gcf-tools/issues"
+  }
+}

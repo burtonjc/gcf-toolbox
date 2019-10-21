@@ -1,0 +1,16 @@
+{
+  "name": "root",
+  "private": true,
+  "scripts": {
+    "publish": "lerna run build && lerna publish",
+    "test": "lerna exec -- npx jest"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.19",
+    "@types/node": "^12.11.2",
+    "jest": "^24.9.0",
+    "lerna": "^3.18.1",
+    "ts-jest": "^24.1.0",
+    "typescript": "^3.6.4"
+  }
+}
