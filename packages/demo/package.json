@@ -1,0 +1,34 @@
+{
+  "name": "@gcf-tools/demo",
+  "description": "Example app using the @gcf-tools packages",
+  "keywords": [
+    "GCF",
+    "GCP",
+    "Functions"
+  ],
+  "author": "Jacob Burton <burtonjc35@gmail.com>",
+  "homepage": "https://github.com/burtonjc/gcf-tools#readme",
+  "license": "MIT",
+  "private": true,
+  "main": "lib/index.js",
+  "typings": "lib/index.d.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/burtonjc/gcf-tools.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "prebuild": "npm run clean",
+    "test": "npx jest"
+  },
+  "bugs": {
+    "url": "https://github.com/burtonjc/gcf-tools/issues"
+  }
+}
