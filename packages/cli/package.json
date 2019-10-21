@@ -13,8 +13,7 @@
   "main": "lib/cli.js",
   "typings": "lib/cli.d.js",
   "directories": {
-    "lib": "lib",
-    "test": "test"
+    "lib": "lib"
   },
   "files": [
     "lib"

@@ -14,8 +14,7 @@
   "main": "lib/gcloud-pubsub-emulator.js",
   "typings": "lib/gcloud-pubsub-emulator.d.js",
   "directories": {
-    "lib": "lib",
-    "test": "test"
+    "lib": "lib"
   },
   "files": [
     "lib"

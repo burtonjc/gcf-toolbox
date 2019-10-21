@@ -13,8 +13,7 @@
   "main": "lib/gcloud-functions.js",
   "typings": "lib/gcloud-functions.d.js",
   "directories": {
-    "lib": "lib",
-    "test": "test"
+    "lib": "lib"
   },
   "files": [
     "lib"
