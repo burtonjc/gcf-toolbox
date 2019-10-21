@@ -1,5 +1,5 @@
 import GCloudPubSubEmulator from '../src/gcloud-pubsub-emulator';
 
-describe('GCloudPubSubEmulator', () => {
+describe('gcloud-pubsub-emulator', () => {
   test.todo('needs tests');
 });

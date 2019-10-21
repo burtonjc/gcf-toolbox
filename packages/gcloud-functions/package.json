@@ -1,0 +1,38 @@
+{
+  "name": "@gcf-tools/gcloud-functions",
+  "version": "0.0.0",
+  "description": "Wrapper around gcloud functions commands to easily interact with GCF from NodeJS",
+  "keywords": [
+    "GCF",
+    "GCP",
+    "Functions"
+  ],
+  "author": "Jacob Burton <burtonjc35@gmail.com>",
+  "homepage": "https://github.com/burtonjc/gcf-tools#readme",
+  "license": "MIT",
+  "main": "lib/gcloud-functions.js",
+  "typings": "lib/gcloud-functions.d.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/burtonjc/gcf-tools.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "prebuild": "npm run clean",
+    "test": "npx jest"
+  },
+  "bugs": {
+    "url": "https://github.com/burtonjc/gcf-tools/issues"
+  }
+}
