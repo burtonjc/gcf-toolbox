@@ -1,0 +1,36 @@
+{
+  "name": "@gcf-tools/gcloud-pubsub-emulator",
+  "version": "0.0.0",
+  "description": "Wrapper around gcloud pubsub emulator to start and stop it from NodeJS",
+  "keywords": [
+    "GCP",
+    "Cloud",
+    "PubSub",
+    "Emulator"
+  ],
+  "author": "Jacob Burton <burtonjc35@gmail.com>",
+  "homepage": "https://github.com/burtonjc/gcf-tools#readme",
+  "license": "MIT",
+  "main": "lib/gcloud-pubsub-emulator.js",
+  "typings": "lib/gcloud-pubsub-emulator.d.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/burtonjc/gcf-tools.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "prebuild": "npm run clean",
+    "test": "npx jest"
+  },
+  "bugs": {
+    "url": "https://github.com/burtonjc/gcf-tools/issues"
+  }
+}

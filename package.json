@@ -2,8 +2,9 @@
   "name": "root",
   "private": true,
   "scripts": {
+    "build": "lerna exec -- npm run build",
     "publish": "lerna run build && lerna publish",
-    "test": "lerna exec -- npx jest"
+    "test": "npx jest"
   },
   "devDependencies": {
     "@types/jest": "^24.0.19",
