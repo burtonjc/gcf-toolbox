@@ -10,8 +10,8 @@
   "author": "Jacob Burton <burtonjc35@gmail.com>",
   "homepage": "https://github.com/burtonjc/gcf-tools#readme",
   "license": "MIT",
-  "main": "lib/cli.js",
-  "typings": "lib/cli.d.js",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.js",
   "bin": {
     "giccup": "lib/index.js"
   },
@@ -29,16 +29,15 @@
     "url": "git+https://github.com/burtonjc/gcf-tools.git"
   },
   "scripts": {
-    "build": "tsc",
     "clean": "rm -rf lib",
-    "prebuild": "npm run clean",
+    "prepare": "tsc",
     "test": "npx jest"
   },
   "bugs": {
     "url": "https://github.com/burtonjc/gcf-tools/issues"
   },
   "dependencies": {
-    "@gcf-tools/gcloud-pubsub-emulator": "file:../gcloud-pubsub-emulator",
+    "@gcf-tools/gcloud-pubsub-emulator": "*",
     "@google-cloud/functions-framework": "^1.3.2",
     "@google-cloud/pubsub": "^1.1.3",
     "chalk": "^2.4.2",

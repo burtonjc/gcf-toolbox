@@ -73,7 +73,7 @@ const buildTasksToDeployFunctions = (configs: FunctionConfig[], names?: string[]
 
   return configs.map((c) => ({
     title: c.name,
-    task: () => depolyFunction(c).all,
+    task: () => depolyFunction(c),
   } as ListrTask<any>));
 }
 

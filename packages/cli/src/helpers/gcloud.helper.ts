@@ -13,26 +13,26 @@ export const setGcloudProject = (project: string) => {
 export const depolyFunction = (config: FunctionConfig) => {
   const args = [
     'functions', 'deploy', config.name,
-    '--runtime', config.runtime
+    `--runtime=${config.runtime}`
   ];
 
   if (config.entryPoint) {
-    args.push('--entry-point', config.entryPoint)
+    args.push(`--entry-point=${config.entryPoint}`)
   }
 
   if (config.source) {
-    args.push('--source', config.source)
+    args.push(`--source=${config.source}`)
   }
 
   if (!config.trigger || config.trigger === 'http') {
     args.push('--trigger-http');
   } else if ('topic' in config.trigger) {
-    args.push('--trigger-topic', config.trigger.topic);
+    args.push(`--trigger-topic=${config.trigger.topic}`);
   } else if ('event' in config.trigger) {
-    args.push('--trigger-event', config.trigger.event);
-    args.push('--trigger-resource', config.trigger.resource);
+    args.push(`--trigger-event=${config.trigger.event}`);
+    args.push(`--trigger-resource=${config.trigger.resource}`);
   } else if ('bucket' in config.trigger) {
-    args.push('--trigger-bucket', config.trigger.bucket)
+    args.push(`--trigger-bucket=${config.trigger.bucket}`)
   }
 
   return execa('gcloud', args);

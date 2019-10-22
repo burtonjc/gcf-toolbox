@@ -1,5 +1,6 @@
 import { inspect } from 'util';
 
+import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
 import { PubSub } from '@google-cloud/pubsub';
 import chalk from 'chalk';
 import execa from 'execa';
@@ -13,7 +14,6 @@ import {
   GiccupConfig,
   PubSubTrigger,
 } from '../../helpers/config.helper';
-import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
 
 const VerboseRenderer = require('listr-verbose-renderer');
 
