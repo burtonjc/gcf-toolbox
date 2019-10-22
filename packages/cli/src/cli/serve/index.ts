@@ -61,19 +61,19 @@ export const serve: CommandExecutor = async () => {
         task: () => {
           let args = [
             'functions-framework',
-            '--target', f.entryPoint || f.name,
-            '--port', `${ 8080 + index }`,
+            `--target=${f.entryPoint || f.name}`,
+            `--port=${ 8080 + index }`,
           ]
 
           if (f.source) {
-            args = [ ...args, '--source', f.source ];
+            args = [ ...args, `--source=${f.source}` ];
           }
 
           if (f.trigger !== 'http') {
-            args = [ ...args, '--signature-type', 'event' ];
+            args = [ ...args, `--signature-type=event` ];
           }
 
-          return execa('npx', args).all;
+          return execa('npx', args, { all: true }).all;
         }
       })), { concurrent: true, exitOnError: false })
     },

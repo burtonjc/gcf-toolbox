@@ -2,7 +2,10 @@ import { EventEmitter } from "events";
 
 import execa = require("execa");
 
-import { PortAlreadyInUseError } from './errors';
+import {
+  EmulatorNotInitializedError,
+  PortAlreadyInUseError,
+} from './errors';
 
 export enum GooglePubSubEmulatorStates {
   Errored   = 'errored',
@@ -46,15 +49,12 @@ class GooglePubSubEmulator extends EventEmitter {
 
   public async start() {
     const params = this.buildCommandParams();
-    this.cmd = execa('gcloud', params);
+    this.cmd = execa('gcloud', params, { all: true });
     this.setState(GooglePubSubEmulatorStates.Starting);
 
-    if (!this.cmd.all) {
-      return Promise.reject('Command not giving output');
-    }
-
     if (this.options.debug) {
-      this.cmd.all.pipe(process.stdout);
+      this.cmd.stdout && this.cmd.stdout.pipe(process.stdout);
+      this.cmd.stderr && this.cmd.stderr.pipe(process.stderr);
     }
 
     try {
@@ -69,6 +69,7 @@ class GooglePubSubEmulator extends EventEmitter {
 
   public stop() {
     if (!this.cmd) {
+      console.log('Emulator not running.');
       return Promise.resolve();
     }
     this.cmd.kill();
@@ -124,7 +125,7 @@ class GooglePubSubEmulator extends EventEmitter {
   private waitForEmulateToStart = () => {
     return new Promise<void>((resolve, reject) => {
       if (!(this.cmd && this.cmd.all)) {
-        return reject('Emulator not initialized.');
+        return reject(new EmulatorNotInitializedError());
       }
 
       const waitForStarted = (data: Buffer) => {

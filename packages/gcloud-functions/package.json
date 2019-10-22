@@ -32,5 +32,8 @@
   },
   "bugs": {
     "url": "https://github.com/burtonjc/gcf-tools/issues"
+  },
+  "dependencies": {
+    "execa": "^3.2.0"
   }
 }
