@@ -14,7 +14,6 @@ import {
   GiccupConfig,
   PubSubTrigger,
 } from '../../helpers/config.helper';
-import { resolve } from 'dns';
 
 const VerboseRenderer = require('listr-verbose-renderer');
 
