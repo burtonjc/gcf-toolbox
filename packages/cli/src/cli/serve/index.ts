@@ -14,6 +14,7 @@ import {
   GiccupConfig,
   PubSubTrigger,
 } from '../../helpers/config.helper';
+import { resolve } from 'dns';
 
 const VerboseRenderer = require('listr-verbose-renderer');
 
@@ -50,7 +51,7 @@ export const serve: CommandExecutor = async () => {
       }
     },
   }, {
-    title: 'Start Functions',
+    title: 'Serve Functions',
     task: (ctx, task) => {
       if (!config.functions.length) {
         return;
@@ -81,7 +82,12 @@ export const serve: CommandExecutor = async () => {
   }], { renderer: VerboseRenderer, });
 
   try {
-    await tasks.run();
+    await new Promise((resolve, reject) => {
+      const taskPromise = tasks.run();
+      process.on('SIGINT', async () => {
+        await taskPromise.then(resolve, reject);
+      });
+    });
   } catch (error) {
     console.error(chalk.red('Something went terribly wrong!'));
     console.error(chalk.red(inspect(error)));

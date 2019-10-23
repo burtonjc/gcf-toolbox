@@ -1,5 +1,5 @@
 {
-  "$schema": "../cli/giccup.config.schema.json",
+  "$schema": "./node_modules/@gcf-tools/cli/giccup.config.schema.json",
   "project": "gcp-nodejs-demo",
   "resources": {
     "functions": [
