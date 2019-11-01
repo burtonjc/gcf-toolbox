@@ -1,19 +1,34 @@
 {
   "$schema": "./node_modules/@gcf-tools/cli/giccup.config.schema.json",
-  "project": "gcp-nodejs-demo",
-  "resources": {
-    "functions": [
-      {
-        "name": "receiveWebhook",
-        "runtime": "nodejs10"
-      },
-      {
-        "name": "receivePubSub",
-        "runtime": "nodejs10",
-        "trigger": {
-          "topic": "demo"
+  "projects": {
+    "gcp-nodejs-prod": {
+      "environmentFile": "./environments/production.env.yml",
+      "functions": {
+        "receiveWebhook": {
+          "runtime": "nodejs10"
+        },
+        "receivePubSub": {
+          "runtime": "nodejs10",
+          "trigger": {
+            "topic": "demo"
+          }
         }
       }
-    ]
+    },
+
+    "gcp-nodejs-dev": {
+      "environmentFile": "./environments/development.env.yml",
+      "functions": {
+        "receiveWebhook": {
+          "runtime": "nodejs10"
+        },
+        "receivePubSub": {
+          "runtime": "nodejs10",
+          "trigger": {
+            "topic": "demo"
+          }
+        }
+      }
+    }
   }
 }

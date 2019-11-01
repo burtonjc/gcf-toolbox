@@ -1,12 +1,5 @@
 import { resolve } from 'path';
 
-// export enum TriggerType {
-//   EventTrigger,
-//   HttpTrigger,
-//   PubSubTrigger,
-//   StorageTrigger,
-// }
-
 export interface EventTrigger {
   event: string;
   resource: string;
@@ -26,19 +19,18 @@ export type TriggerType = EventTrigger | HttpTrigger | PubSubTrigger | StorageTr
 
 interface RawFunctionConfig<T extends TriggerType = TriggerType> {
   entryPoint?: string;
-  name: string;
   runtime: string;
   source?: string;
   trigger?: T;
 }
 
 interface RawGiccupConfig {
-  project: string;
-  resources?: {
-    functions?: RawFunctionConfig<TriggerType>[];
-    pubsub: {
-      topics: string[]
-    };
+  projects?: {
+    [name: string]: {
+      functions?: {
+        [name: string]: RawFunctionConfig[];
+      }
+    }
   }
 }
 
@@ -63,7 +55,7 @@ export class GiccupConfig {
   }
 }
 
-export const getGiccupConfig = () => {
+export const getProjectConfig = (project?: string) => {
   const path = resolve(process.cwd(), 'giccup.config.json');
   const raw = require(path) as RawGiccupConfig;
 
