@@ -5,7 +5,7 @@ import Listr, { ListrTask } from 'listr';
 import meow from 'meow';
 
 import { CommandExecutor } from "../../helpers/command.helper";
-import { FunctionConfig, getGiccupConfig } from '../../helpers/config.helper';
+import { FunctionConfig, getProjectConfig } from '../../helpers/config.helper';
 import { depolyFunction, setGcloudProject } from "../../helpers/gcloud.helper";
 
 export const deploy: CommandExecutor = async () => {
@@ -13,20 +13,23 @@ export const deploy: CommandExecutor = async () => {
     ${chalk.underline(`Usage`)}
       $ giccup deploy <resource> [options] ...
 
+    ${chalk.underline('Options')}
+      --project, -p                         Id of GCP project to deploy
+
     ${chalk.underline('Global Options')}
-      --help, -h                  Show help text
+      --help, -h                            Show help text
 
     ${chalk.underline('Resources')}
       functions <entry points ...>          Deploy functions
 
     ${chalk.underline('Examples')}
-      giccup deploy                         Deploy all resources
-      giccup deploy functions               Deploy all functions
-      giccup deploy functions fun1          Deploy the fun1 function
-      giccup deploy functions fun1 fun2     Deploy the fun1 and fun2 functions
+      giccup deploy                               Deploy all resources for defaultProject
+      giccup deploy functions --project=proj-1    Deploy all functions for proj-1
+      giccup deploy functions fun1 fun2           Deploy the fun1 and fun2 functions for defaultProject
   `, {
     flags: {
-      help: { alias: '-h' }
+      help: { alias: '-h' },
+      project: { alias: '-p' },
     }
   });
 
@@ -37,11 +40,11 @@ export const deploy: CommandExecutor = async () => {
     cli.showHelp(1);
   }
 
-  const config = getGiccupConfig();
+  const config = getProjectConfig(cli.flags.project);
 
   const tasks = new Listr([{
     title: 'Set project in gcloud',
-    task: () => setGcloudProject(config.project).all,
+    task: () => setGcloudProject(config.projectId),
   }], { collapse: false } as any);
 
   if (!resource || resource === 'functions') {

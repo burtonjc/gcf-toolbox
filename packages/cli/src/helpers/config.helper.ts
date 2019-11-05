@@ -1,5 +1,7 @@
 import { resolve } from 'path';
 
+import { NoProjectSpecifiedError, ProjectNotFoundInConfigError } from '../cli/errors';
+
 export interface EventTrigger {
   event: string;
   resource: string;
@@ -24,40 +26,59 @@ interface RawFunctionConfig<T extends TriggerType = TriggerType> {
   trigger?: T;
 }
 
+interface RawProjectConfig {
+  functions?: {
+    [name: string]: RawFunctionConfig;
+  }
+}
+
 interface RawGiccupConfig {
+  defaultProject?: string;
   projects?: {
-    [name: string]: {
-      functions?: {
-        [name: string]: RawFunctionConfig[];
-      }
-    }
+    [name: string]: RawProjectConfig;
   }
 }
 
 export interface FunctionConfig<T extends TriggerType = TriggerType> extends RawFunctionConfig {
-  // Make this not optional in code for convenience
-  trigger: T;
+  name: string;
+  trigger: T; // Make this not optional in code for convenience
 }
 
-export class GiccupConfig {
-  constructor(private config: RawGiccupConfig) { }
+export class ProjectConfig {
+  constructor(private _projectId: string, private config: RawProjectConfig) { }
+
+  public get projectId() {
+    return this._projectId;
+  }
 
   public get functions(): FunctionConfig<TriggerType>[] {
-    const rawFunctions = (this.config.resources && this.config.resources.functions) || [];
-    return rawFunctions.map((rf) => {
-      rf.trigger = rf.trigger || 'http';
-      return rf as FunctionConfig<TriggerType>;
-    });
-  }
+    const functions = [] as FunctionConfig[];
 
-  public get project() {
-    return this.config.project;
+    for (const key in this.config.functions) {
+      functions.push(Object.assign({
+        name: key,
+        trigger: 'http',
+      }, this.config.functions[key]));
+    }
+
+    return functions;
   }
 }
 
-export const getProjectConfig = (project?: string) => {
+export const getProjectConfig = (projectId?: string) => {
   const path = resolve(process.cwd(), 'giccup.config.json');
   const raw = require(path) as RawGiccupConfig;
+  projectId = projectId || raw.defaultProject;
 
-  return new GiccupConfig(raw);
+  if (!projectId) {
+    throw new NoProjectSpecifiedError();
+  }
+
+  const project = raw.projects && raw.projects[projectId];
+
+  if (!project) {
+    throw new ProjectNotFoundInConfigError();
+  }
+
+  return new ProjectConfig(projectId, project);
 }

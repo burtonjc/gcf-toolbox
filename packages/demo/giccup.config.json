@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/@gcf-tools/cli/giccup.config.schema.json",
+
+  "defaultProject": "gcp-nodejs-demo",
+
   "projects": {
     "gcp-nodejs-prod": {
       "environmentFile": "./environments/production.env.yml",
@@ -16,7 +19,7 @@
       }
     },
 
-    "gcp-nodejs-dev": {
+    "gcp-nodejs-demo": {
       "environmentFile": "./environments/development.env.yml",
       "functions": {
         "receiveWebhook": {
