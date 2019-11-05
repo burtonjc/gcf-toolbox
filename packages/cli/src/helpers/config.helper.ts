@@ -27,6 +27,7 @@ interface RawFunctionConfig<T extends TriggerType = TriggerType> {
 }
 
 interface RawProjectConfig {
+  environmentFile?: string;
   functions?: {
     [name: string]: RawFunctionConfig;
   }
@@ -40,6 +41,7 @@ interface RawGiccupConfig {
 }
 
 export interface FunctionConfig<T extends TriggerType = TriggerType> extends RawFunctionConfig {
+  environmentFile?: string;
   name: string;
   trigger: T; // Make this not optional in code for convenience
 }
@@ -56,6 +58,7 @@ export class ProjectConfig {
 
     for (const key in this.config.functions) {
       functions.push(Object.assign({
+        environmentFile: this.config.environmentFile,
         name: key,
         trigger: 'http',
       }, this.config.functions[key]));

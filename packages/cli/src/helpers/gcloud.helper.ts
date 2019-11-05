@@ -35,5 +35,9 @@ export const depolyFunction = (config: FunctionConfig) => {
     args.push(`--trigger-bucket=${config.trigger.bucket}`)
   }
 
+  if (config.environmentFile) {
+    args.push(`--env-vars-file=${config.environmentFile}`)
+  }
+
   return execa('gcloud', args);
 }
