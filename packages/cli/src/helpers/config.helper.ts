@@ -49,8 +49,8 @@ export interface FunctionConfig<T extends TriggerType = TriggerType> extends Raw
 export class ProjectConfig {
   constructor(private _projectId: string, private config: RawProjectConfig) { }
 
-  public get projectId() {
-    return this._projectId;
+  public get environmentFile() {
+    return this.config.environmentFile;
   }
 
   public get functions(): FunctionConfig<TriggerType>[] {
@@ -65,6 +65,10 @@ export class ProjectConfig {
     }
 
     return functions;
+  }
+
+  public get projectId() {
+    return this._projectId;
   }
 }
 

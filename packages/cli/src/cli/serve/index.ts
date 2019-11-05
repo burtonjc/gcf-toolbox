@@ -1,9 +1,11 @@
+import { readFileSync } from 'fs';
 import { inspect } from 'util';
 
 import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
 import { PubSub } from '@google-cloud/pubsub';
 import chalk from 'chalk';
 import execa from 'execa';
+import { safeLoad } from 'js-yaml';
 import Listr from 'listr';
 import meow from 'meow';
 
@@ -14,6 +16,7 @@ import {
   ProjectConfig,
   PubSubTrigger,
 } from '../../helpers/config.helper';
+import { importDeclaration } from '@babel/types';
 
 const VerboseRenderer = require('listr-verbose-renderer');
 
@@ -40,6 +43,8 @@ export const serve: CommandExecutor = async () => {
   });
 
   const config = getProjectConfig(cli.flags.project);
+  const env = config.environmentFile ? safeLoad(readFileSync(config.environmentFile, 'utf8')) : {};
+  console.log('env:', env);
   const emulator = getEmulator(config, { debug: cli.flags.hasOwnProperty('verbose') });
   const tasks = new Listr([{
     title: 'Start PubSub emulator',
@@ -79,7 +84,7 @@ export const serve: CommandExecutor = async () => {
             args = [ ...args, `--signature-type=event` ];
           }
 
-          return execa('npx', args, { all: true }).all;
+          return execa('npx', args, { all: true, env }).all;
         }
       })), { concurrent: true, exitOnError: false })
     },
