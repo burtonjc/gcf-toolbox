@@ -1,43 +1,53 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "id": "https://angular.io/schemas/cli-1/schema",
-  "title": "Angular CLI Configuration",
+  "title": "GCP Toolbox Configuration",
   "type": "object",
   "properties": {
-    "project": {
+    "defaultProject": {
       "type": "string",
-      "description": "Google Cloud Platform project ID"
+      "description": "Default project id used in commands.",
+      "pattern": "^[a-zA-Z0-9-~]*$"
     },
-    "resources": {
+    "projects": {
       "type": "object",
-      "$ref": "#/definitions/resources"
+      "description": "Google Cloud Platform project ID",
+      "patternProperties": {
+        "^[a-zA-Z0-9-~]*$": {
+          "$ref": "#/definitions/project"
+        }
+      },
+      "additionalProperties": false
     }
   },
+  "additionalProperties": false,
+
   "definitions": {
-    "resources": {
+    "project": {
       "type": "object",
       "properties": {
+        "environmentFile": {
+          "type": "string",
+          "description": "Relative path to environment file to use for this project"
+        },
         "functions": {
+          "type": "object",
           "description": "Google Cloud Function definitions",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/function"
+          "patternProperties": {
+            "[a-zA-Z0-9-~]*$": {
+              "$ref": "#/definitions/function"
+            }
           },
-          "default": [
-
-          ]
+          "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
     },
     "function": {
       "properties": {
         "entryPoint": {
           "type": "string",
           "description": "Name of the function as it is exported by the module. Only needed if it is different than `name`."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the function as it will appear in the GCP console"
         },
         "runtime": {
           "type": "string",
@@ -57,7 +67,8 @@
           ]
         }
       },
-      "required": ["name", "runtime"]
+      "additionalProperties": false,
+      "required": [ "runtime" ]
     },
     "cloud-event-trigger": {
       "type": "object",
@@ -97,11 +108,12 @@
         }
       },
       "additionalProperties": false,
-      "required": ["event", "resource"]
+      "required": [ "event", "resource" ]
     },
     "http-trigger": {
       "type": "string",
-      "enum": ["http"]
+      "enum": [ "http" ],
+      "additionalProperties": false
     },
     "pubsub-trigger": {
       "type": "object",
@@ -112,7 +124,7 @@
         }
       },
       "additionalProperties": false,
-      "required": ["topic"]
+      "required": [ "topic" ]
     },
     "storage-trigger": {
       "type": "object",
@@ -123,7 +135,7 @@
         }
       },
       "additionalProperties": false,
-      "required": ["bucket"]
+      "required": [ "bucket" ]
     }
   }
 }

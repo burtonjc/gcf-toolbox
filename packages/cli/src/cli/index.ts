@@ -31,5 +31,10 @@ export const cli = async () => {
     cli.showHelp(0);
   }
 
-  await executeSubCommand(cli, __dirname);
+  try {
+    await executeSubCommand(cli, __dirname);
+  } catch (error) {
+    console.log(chalk.red(error.message));
+    process.exit(1);
+  }
 }

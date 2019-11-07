@@ -1,19 +1,22 @@
+import { readFileSync } from 'fs';
 import { inspect } from 'util';
 
 import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
 import { PubSub } from '@google-cloud/pubsub';
 import chalk from 'chalk';
 import execa from 'execa';
+import { safeLoad } from 'js-yaml';
 import Listr from 'listr';
 import meow from 'meow';
 
 import { CommandExecutor } from '../../helpers/command.helper';
 import {
   FunctionConfig,
-  getGiccupConfig,
-  GiccupConfig,
+  getProjectConfig,
+  ProjectConfig,
   PubSubTrigger,
 } from '../../helpers/config.helper';
+import { importDeclaration } from '@babel/types';
 
 const VerboseRenderer = require('listr-verbose-renderer');
 
@@ -25,16 +28,24 @@ export const serve: CommandExecutor = async () => {
     ${chalk.underline(`Usage`)}
       $ giccup serve [options] ...
 
+    ${chalk.underline('Options')}
+    --project, -p                 Id of GCP project to serve
+    --verbose, -v                 Enable verbose logging
+
     ${chalk.underline('Global Options')}
       --help, -h                  Show help text
   `, {
     flags: {
-      help: { alias: '-h' }
+      help: { alias: '-h' },
+      project: { alias: '-p' },
+      verbose: { alias: '-v' },
     }
   });
 
-  const config = getGiccupConfig();
-  const emulator = getEmulator(config);
+  const config = getProjectConfig(cli.flags.project);
+  const env = config.environmentFile ? safeLoad(readFileSync(config.environmentFile, 'utf8')) : {};
+  console.log('env:', env);
+  const emulator = getEmulator(config, { debug: cli.flags.hasOwnProperty('verbose') });
   const tasks = new Listr([{
     title: 'Start PubSub emulator',
     task: (ctx, task) => emulator.start()
@@ -73,7 +84,7 @@ export const serve: CommandExecutor = async () => {
             args = [ ...args, `--signature-type=event` ];
           }
 
-          return execa('npx', args, { all: true }).all;
+          return execa('npx', args, { all: true, env }).all;
         }
       })), { concurrent: true, exitOnError: false })
     },
@@ -100,19 +111,19 @@ export const serve: CommandExecutor = async () => {
 /*****************************************************************************/
 
 let emulator: GooglePubSubEmulator;
-const getEmulator = (config: GiccupConfig) => {
+const getEmulator = (config: ProjectConfig, options?: { debug?: boolean }) => {
   if (!emulator) {
     emulator = new GooglePubSubEmulator({
-      // debug: true,
-      project: config.project,
+      debug: options && options.debug,
+      project: config.projectId,
     });
   }
 
   return emulator;
 }
 
-const createPushSubscription = async (config: GiccupConfig, fn: FunctionConfig<PubSubTrigger>) => {
-  const pubsub = new PubSub({ projectId: config.project });
+const createPushSubscription = async (config: ProjectConfig, fn: FunctionConfig<PubSubTrigger>) => {
+  const pubsub = new PubSub({ projectId: config.projectId });
 
   const topic = await pubsub.topic(fn.trigger.topic);
   const [topicExists] = await topic.exists();
@@ -120,7 +131,7 @@ const createPushSubscription = async (config: GiccupConfig, fn: FunctionConfig<P
     await topic.create();
   }
 
-  const fnIndex = config.functions.findIndex(f => f === fn);
+  const fnIndex = config.functions.findIndex(f => f.name === fn.name);
   const subscription = await pubsub.subscription(
     `local-${fn.name}-${fn.trigger.topic}`,
     { topic }
