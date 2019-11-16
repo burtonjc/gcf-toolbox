@@ -1,14 +1,17 @@
 import { existsSync, writeFileSync } from 'fs';
 
 import chalk from 'chalk';
+import commandExists from 'command-exists';
+import Listr from 'listr';
 import meow from 'meow';
 
 import { CommandExecutor } from "../../helpers/command.helper";
 import {
   CONFIG_FILE_NAME,
   CONFIG_SCHEMA_FILE_NAME,
-  RawGiccupConfig,
 } from "../../helpers/config.helper";
+import { GcloudCLINotInstalled } from '../errors';
+import execa from 'execa';
 
 const config = `{
   "$schema": "./node_modules/@gcf-tools/cli/${CONFIG_SCHEMA_FILE_NAME}",
@@ -42,14 +45,35 @@ export const init: CommandExecutor = async () => {
     }
   });
 
-  if (existsSync(CONFIG_FILE_NAME)) {
-    console.log(chalk.cyan('Config file already exists ... exiting.'));
-    return;
-  }
+  const tasks = new Listr([{
+    title: 'Create config file',
+    skip: () => existsSync(CONFIG_FILE_NAME),
+    task: () => {
+      writeFileSync(CONFIG_FILE_NAME, config);
+    }
+  }, {
+    title: 'Check Google Cloud SDK exists',
+    task: async (ctx, task) => {
+      try {
+        await commandExists('gcloud');
+      } catch (error) {
+        throw new GcloudCLINotInstalled();
+      }
+    }
+  }, {
+    title: 'Install the pubsub emulator',
+    task: () => {
+      return execa('gcloud', ['components', 'install', 'pubsub-emulator'])
+    }
+  }]);
 
-  writeFileSync(CONFIG_FILE_NAME, config);
-
-  console.log(chalk.green(`Successfully created ${chalk.bold(CONFIG_FILE_NAME)}!`));
+  return tasks.run().then(() => {
+    console.log();
+    console.log(chalk.green('You are all set. Use `npx giccup --help` to get started.'));
+  }).catch((error) => {
+    console.log();
+    console.log(chalk.red(error.message));
+  })
 }
 
 export default init;

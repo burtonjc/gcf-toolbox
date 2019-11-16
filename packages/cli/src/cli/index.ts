@@ -1,3 +1,5 @@
+import { inspect } from 'util';
+
 import chalk from 'chalk';
 import meow from 'meow';
 
