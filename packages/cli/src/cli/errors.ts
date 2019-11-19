@@ -1,5 +1,5 @@
 export class GcloudCLINotInstalled extends Error {
-  message = 'gcloud cli not installed. Please follow the instructions at https://cloud.google.com/sdk/docs/#install_the_latest_cloud_tools_version_cloudsdk_current_version to install it.';
+  message = 'gcloud cli not installed or not available on your path. Please follow the instructions at https://cloud.google.com/sdk/docs/#install_the_latest_cloud_tools_version_cloudsdk_current_version to install it.';
 }
 
 export class NoProjectSpecifiedError extends Error {
