@@ -2,6 +2,9 @@ import { resolve } from 'path';
 
 import { NoProjectSpecifiedError, ProjectNotFoundInConfigError } from '../cli/errors';
 
+export const CONFIG_FILE_NAME = 'giccup.config.json';
+export const CONFIG_SCHEMA_FILE_NAME = 'giccup.config.schema.json';
+
 export interface EventTrigger {
   event: string;
   resource: string;
@@ -33,7 +36,8 @@ interface RawProjectConfig {
   }
 }
 
-interface RawGiccupConfig {
+export interface RawGiccupConfig {
+  $schema: string,
   defaultProject?: string;
   projects?: {
     [name: string]: RawProjectConfig;
@@ -73,7 +77,7 @@ export class ProjectConfig {
 }
 
 export const getProjectConfig = (projectId?: string) => {
-  const path = resolve(process.cwd(), 'giccup.config.json');
+  const path = resolve(process.cwd(), CONFIG_FILE_NAME);
   const raw = require(path) as RawGiccupConfig;
   projectId = projectId || raw.defaultProject;
 
