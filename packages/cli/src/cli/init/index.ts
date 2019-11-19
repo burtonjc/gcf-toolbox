@@ -13,7 +13,7 @@ import {
 import { GcloudCLINotInstalled } from '../errors';
 import execa from 'execa';
 
-const config = `{
+const EMPTY_CONFIG = `{
   "$schema": "./node_modules/@gcf-tools/cli/${CONFIG_SCHEMA_FILE_NAME}",
 
   // "defaultProject": null                               /* Default project to use for commands when --project is not specified */
@@ -49,7 +49,7 @@ export const init: CommandExecutor = async () => {
     title: 'Create config file',
     skip: () => existsSync(CONFIG_FILE_NAME),
     task: () => {
-      writeFileSync(CONFIG_FILE_NAME, config);
+      writeFileSync(CONFIG_FILE_NAME, EMPTY_CONFIG);
     }
   }, {
     title: 'Check Google Cloud SDK exists',
