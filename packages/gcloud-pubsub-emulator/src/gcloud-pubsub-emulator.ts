@@ -81,6 +81,18 @@ class GooglePubSubEmulator {
     return this.stateSubject.asObservable();
   }
 
+  public get log() {
+    if (!this.cmd) {
+      return;
+    }
+
+    return {
+      all: this.cmd.all,
+      stderr: this.cmd.stderr,
+      stdout: this.cmd.stdout,
+    }
+  }
+
   private buildCommandParams() {
     const params = ['beta', 'emulators', 'pubsub', 'start'];
 

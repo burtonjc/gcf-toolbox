@@ -18,6 +18,7 @@ import {
   PubSubTrigger,
 } from '../../helpers/config.helper';
 import { LocalFunction } from './local-function';
+import { Writable } from 'stream';
 
 const VerboseRenderer = require('listr-verbose-renderer');
 
@@ -48,39 +49,52 @@ export const serve: CommandExecutor = async () => {
   const emulator = getEmulator(config, { debug: cli.flags.hasOwnProperty('verbose') });
 
   const screen = blessed.screen();
-  const table = contrib.table({
-    keys: true,
-    fg: 'white',
-    selectedFg: 'white',
-    selectedBg: 'blue',
-    label: ' Active Processes ',
-    width: '100%',
-    height: '30%',
+  const grid = new contrib.grid({ rows: 1, cols: 2, screen });
+  const table = grid.set(0,0,1,1, contrib.table, {
     border: { type: "line", fg: "cyan" },
     columnSpacing: 10, //in chars
     columnWidth: [16, 12, 12], /*in chars*/
+    fg: 'white',
+    height: '30%',
+    label: 'Active Processes',
+    width: '50%',
+  });
+  const emulatorLog = grid.set(0,1,1,1, contrib.log, {
+    border: { type: 'line' },
+    fg: 'white',
+    height: '30%',
+    label: 'Emulator log',
+    width: '50%',
   });
 
-  screen.append(table);
+  screen.render();
 
   emulator.state.forEach((state) => {
-    console.log('emulator set state:', state);
     table.setData({
+      headers: [ 'Process', 'State', 'Port' ],
       data: [
         [ 'Emulator', state, '0001' ]
       ]
     })
   });
 
+
   screen.key(['escape', 'q', 'C-c'], function(ch, key) {
-    console.log('killing the things');
     emulator.stop();
     return process.exit(0);
   });
 
-  screen.render();
 
   emulator.start();
+
+  if (emulator.log && emulator.log.all) {
+    emulator.log.all.pipe(new Writable({
+      write: (chunk, encoding, next) => {
+        emulatorLog.log(chunk.toString());
+        next();
+      }
+    }))
+  }
 
 
   // const tasks = new Listr([{
