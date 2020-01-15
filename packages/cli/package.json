@@ -29,6 +29,8 @@
     "url": "git+https://github.com/burtonjc/gcf-tools.git"
   },
   "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc -w",
     "clean": "rm -rf lib",
     "prepare": "tsc",
     "test": "npx jest"

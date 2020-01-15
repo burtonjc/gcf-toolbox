@@ -1,31 +1,30 @@
 import execa, { ExecaChildProcess } from 'execa';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 
 import { FunctionConfig } from "../../helpers/config.helper";
-import { EventEmitter } from 'events';
 
 export enum FunctionState {
   Errored   = 'errored',
   Running   = 'running',
   Starting  = 'starting',
   Stopped   = 'stopped',
+  Stopping   = 'stopping',
 }
 
 export interface LocalFunctionOptions {
   debug?: boolean,
   env?: { [prop: string]: string },
-  port?: number,
+  port: number,
 }
 
-export class LocalFunction extends EventEmitter {
-  private _state: FunctionState = FunctionState.Stopped;
+export class LocalFunction {
+  private stateSubject = new BehaviorSubject(FunctionState.Stopped);
   private process?: ExecaChildProcess;
 
   constructor(
     private config: FunctionConfig,
     private options: LocalFunctionOptions = {} as LocalFunctionOptions
-  ) {
-    super();
-  }
+  ) { }
 
   public async start() {
     const { cmd, args } = this.getCommand()
@@ -48,16 +47,29 @@ export class LocalFunction extends EventEmitter {
   }
 
   public stop() {
-    if (!this.process) {
-      return Promise.resolve();
+    if (this.process) {
+      this.setState(FunctionState.Stopping);
+      this.process.kill();
+      delete this.process;
+      this.setState(FunctionState.Stopped);
     }
-    this.process.kill();
-    delete this.process;
-    this.setState(FunctionState.Stopped);
+    return Promise.resolve();
+  }
+
+  public get name() {
+    return this.config.name;
+  }
+
+  public get port() {
+    return this.options.port;
   }
 
   public get state() {
-    return this._state;
+    return this.stateSubject.asObservable();
+  }
+
+  public get currentState() {
+    return this.stateSubject.value;
   }
 
   private getCommand() {
@@ -79,12 +91,11 @@ export class LocalFunction extends EventEmitter {
   }
 
   private setState(state: FunctionState) {
-    this._state = state;
-    this.emit(state);
+    this.stateSubject.next(state);
   }
 
   private waitForProcessReady() {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       if (!(this.process && this.process.stdout)) {
         return reject(new Error('No process or process not emitting logs.'));
       }

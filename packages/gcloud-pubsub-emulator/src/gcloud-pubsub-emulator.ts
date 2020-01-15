@@ -42,14 +42,15 @@ export interface GooglePubSubEmulatorOptions {
 
 class GooglePubSubEmulator {
   private cmd?: execa.ExecaChildProcess;
+  private _port?: number;
   private stateSubject = new BehaviorSubject(GooglePubSubEmulatorStates.Stopped);
 
   constructor(private options: GooglePubSubEmulatorOptions) { }
 
   public async start() {
+    this.stateSubject.next(GooglePubSubEmulatorStates.Starting);
     const params = this.buildCommandParams();
     this.cmd = execa('gcloud', params, { all: true });
-    this.stateSubject.next(GooglePubSubEmulatorStates.Starting);
 
     if (this.options.debug) {
       this.cmd.stdout && this.cmd.stdout.pipe(process.stdout);
@@ -77,8 +78,16 @@ class GooglePubSubEmulator {
     this.stateSubject.next(GooglePubSubEmulatorStates.Stopped);
   }
 
+  public get port() {
+    return this._port;
+  }
+
   public get state() {
     return this.stateSubject.asObservable();
+  }
+
+  public get currentState() {
+    return this.stateSubject.value;
   }
 
   public get log() {
@@ -136,6 +145,11 @@ class GooglePubSubEmulator {
 
       const waitForStarted = (data: Buffer) => {
         if (data.toString().includes('Server started, listening on ')) {
+          const match = data.toString().match(/listening on (\d+)/);
+          if (match && match[1]) {
+            this._port = parseInt(match[1]);
+          }
+
           this.cmd && this.cmd.all && this.cmd.all.off('data', waitForStarted);
           return resolve();
         }

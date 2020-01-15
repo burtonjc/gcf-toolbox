@@ -1,13 +1,9 @@
 import { readFileSync } from 'fs';
-import { inspect } from 'util';
 
 import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
 import { PubSub } from '@google-cloud/pubsub';
-import blessed from 'blessed';
-import contrib from 'blessed-contrib';
 import chalk from 'chalk';
 import { safeLoad } from 'js-yaml';
-import Listr from 'listr';
 import meow from 'meow';
 
 import { CommandExecutor } from '../../helpers/command.helper';
@@ -18,9 +14,7 @@ import {
   PubSubTrigger,
 } from '../../helpers/config.helper';
 import { LocalFunction } from './local-function';
-import { Writable } from 'stream';
-
-const VerboseRenderer = require('listr-verbose-renderer');
+import { Dashboard } from './dashboard';
 
 export const serve: CommandExecutor = async () => {
   const cli =  meow(`
@@ -47,55 +41,19 @@ export const serve: CommandExecutor = async () => {
   const config = getProjectConfig(cli.flags.project);
   const env = config.environmentFile ? safeLoad(readFileSync(config.environmentFile, 'utf8')) : {};
   const emulator = getEmulator(config, { debug: cli.flags.hasOwnProperty('verbose') });
-
-  const screen = blessed.screen();
-  const grid = new contrib.grid({ rows: 1, cols: 2, screen });
-  const table = grid.set(0,0,1,1, contrib.table, {
-    border: { type: "line", fg: "cyan" },
-    columnSpacing: 10, //in chars
-    columnWidth: [16, 12, 12], /*in chars*/
-    fg: 'white',
-    height: '30%',
-    label: 'Active Processes',
-    width: '50%',
-  });
-  const emulatorLog = grid.set(0,1,1,1, contrib.log, {
-    border: { type: 'line' },
-    fg: 'white',
-    height: '30%',
-    label: 'Emulator log',
-    width: '50%',
+  const functions = config.functions.map((fc, index) => {
+    return new LocalFunction(fc, {
+      debug: cli.flags.hasOwnProperty('verbose'),
+      env,
+      port: 8080 + index,
+    });
   });
 
-  screen.render();
+  const dashboard = new Dashboard(emulator, functions);
 
-  emulator.state.forEach((state) => {
-    table.setData({
-      headers: [ 'Process', 'State', 'Port' ],
-      data: [
-        [ 'Emulator', state, '0001' ]
-      ]
-    })
-  });
-
-
-  screen.key(['escape', 'q', 'C-c'], function(ch, key) {
-    emulator.stop();
-    return process.exit(0);
-  });
-
-
+  dashboard.start();
   emulator.start();
-
-  if (emulator.log && emulator.log.all) {
-    emulator.log.all.pipe(new Writable({
-      write: (chunk, encoding, next) => {
-        emulatorLog.log(chunk.toString());
-        next();
-      }
-    }))
-  }
-
+  functions.forEach(fun => fun.start());
 
   // const tasks = new Listr([{
   //   title: 'Start PubSub emulator',
