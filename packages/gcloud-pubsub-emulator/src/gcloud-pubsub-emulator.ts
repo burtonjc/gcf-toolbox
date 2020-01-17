@@ -130,6 +130,7 @@ class GooglePubSubEmulator {
       const [key, value] = item.split('=');
       return {...agg, [key]: value};
     }, {});
+
     Object.assign(process.env, env);
   }
 

@@ -52,7 +52,19 @@ export const serve: CommandExecutor = async () => {
   const dashboard = new Dashboard(emulator, functions);
 
   dashboard.start();
-  emulator.start();
+  await emulator.start();
+
+  const eventTriggerdFns = config.functions.filter((f) =>
+    (f.trigger as Object).hasOwnProperty('topic')
+  ) as FunctionConfig<PubSubTrigger>[];
+  const subscriptions = await Promise.all(
+    eventTriggerdFns.map((fc) => createPushSubscription(config, fc))
+  );
+
+  dashboard.pushSubscriptions = subscriptions;
+  // const md = await subscriptions[0].getMetadata();
+  // console.log(md);
+
   functions.forEach(fun => fun.start());
 
   // const tasks = new Listr([{
@@ -61,13 +73,13 @@ export const serve: CommandExecutor = async () => {
   // }, {
   //   title: 'Create PubSub triggers',
   //   task: async () => {
-  //     const eventTriggerdFns = config.functions.filter((f) =>
-  //       (f.trigger as Object).hasOwnProperty('topic')
-  //     ) as FunctionConfig<PubSubTrigger>[];
+      // const eventTriggerdFns = config.functions.filter((f) =>
+      //   (f.trigger as Object).hasOwnProperty('topic')
+      // ) as FunctionConfig<PubSubTrigger>[];
 
-  //     for (const fn of eventTriggerdFns) {
-  //       await createPushSubscription(config, fn);
-  //     }
+      // for (const fn of eventTriggerdFns) {
+      //   await createPushSubscription(config, fn);
+      // }
   //   },
   // }, {
   //   title: 'Serve Functions',
@@ -144,6 +156,8 @@ const createPushSubscription = async (config: ProjectConfig, fn: FunctionConfig<
   } else {
     await subscription.create({ pushEndpoint });
   }
+
+  return subscription;
 }
 
 export default serve;
