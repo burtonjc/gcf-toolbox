@@ -33,8 +33,8 @@ export class LocalFunction {
     this.setState(FunctionState.Starting)
 
     if (this.options.debug) {
-      this.process.stdout && this.process.stdout.pipe(process.stdout);
-      this.process.stderr && this.process.stderr.pipe(process.stderr);
+      this.process.stdout?.pipe(process.stdout);
+      this.process.stderr?.pipe(process.stderr);
     }
 
     try {

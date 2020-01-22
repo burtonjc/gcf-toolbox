@@ -1,3 +1,7 @@
+import { createWriteStream } from 'fs';
+import { join } from 'path';
+import { PassThrough, Readable, Writable } from 'stream';
+
 import { BehaviorSubject } from 'rxjs';
 import execa = require("execa");
 
@@ -45,17 +49,16 @@ class GooglePubSubEmulator {
   private _port?: number;
   private stateSubject = new BehaviorSubject(GooglePubSubEmulatorStates.Stopped);
 
+  public log = new PassThrough();
+
   constructor(private options: GooglePubSubEmulatorOptions) { }
 
   public async start() {
     this.stateSubject.next(GooglePubSubEmulatorStates.Starting);
+
     const params = this.buildCommandParams();
     this.cmd = execa('gcloud', params, { all: true });
-
-    if (this.options.debug) {
-      this.cmd.stdout && this.cmd.stdout.pipe(process.stdout);
-      this.cmd.stderr && this.cmd.stderr.pipe(process.stderr);
-    }
+    this.cmd.all?.pipe(this.log);
 
     try {
       await this.waitForEmulateToStart();
@@ -88,18 +91,6 @@ class GooglePubSubEmulator {
 
   public get currentState() {
     return this.stateSubject.value;
-  }
-
-  public get log() {
-    if (!this.cmd) {
-      return;
-    }
-
-    return {
-      all: this.cmd.all,
-      stderr: this.cmd.stderr,
-      stdout: this.cmd.stdout,
-    }
   }
 
   private buildCommandParams() {
@@ -140,7 +131,7 @@ class GooglePubSubEmulator {
 
   private waitForEmulateToStart = () => {
     return new Promise<void>((resolve, reject) => {
-      if (!(this.cmd && this.cmd.all)) {
+      if (!this.cmd?.all) {
         return reject(new EmulatorNotInitializedError());
       }
 
