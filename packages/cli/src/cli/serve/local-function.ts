@@ -1,3 +1,5 @@
+import { PassThrough } from 'stream';
+
 import execa, { ExecaChildProcess } from 'execa';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 
@@ -21,21 +23,19 @@ export class LocalFunction {
   private stateSubject = new BehaviorSubject(FunctionState.Stopped);
   private process?: ExecaChildProcess;
 
+  public log = new PassThrough();
+
   constructor(
     private config: FunctionConfig,
     private options: LocalFunctionOptions = {} as LocalFunctionOptions
   ) { }
 
   public async start() {
-    const { cmd, args } = this.getCommand()
-
-    this.process = execa(cmd, args, { all: true, env: this.options.env });
     this.setState(FunctionState.Starting)
 
-    if (this.options.debug) {
-      this.process.stdout?.pipe(process.stdout);
-      this.process.stderr?.pipe(process.stderr);
-    }
+    const { cmd, args } = this.getCommand()
+    this.process = execa(cmd, args, { all: true, env: this.options.env });
+    this.process.all?.pipe(this.log);
 
     try {
       await this.waitForProcessReady();

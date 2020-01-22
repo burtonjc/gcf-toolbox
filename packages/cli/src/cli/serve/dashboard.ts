@@ -76,6 +76,17 @@ export class Dashboard {
       emulatorLog.log(chunk.toString());
     });
 
+    this.functions.forEach((f, idx) => {
+      const row = 2 + Math.floor(idx / 2);
+      const column = (idx + 2) % 2;
+      const functionLog = grid.set(row, column, 1, 1, contrib.log, {
+        label: `${f.name} Log`,
+      } as contrib.Widgets.LogOptions);
+      f.log.on('data', (chunk: Buffer) => {
+        functionLog.log(chunk.toString());
+      });
+    })
+
     this.screen.render();
   }
 
