@@ -1,5 +1,8 @@
-import { EventEmitter } from "events";
+import { createWriteStream } from 'fs';
+import { join } from 'path';
+import { PassThrough, Readable, Writable } from 'stream';
 
+import { BehaviorSubject } from 'rxjs';
 import execa = require("execa");
 
 import {
@@ -41,28 +44,28 @@ export interface GooglePubSubEmulatorOptions {
   project: string;
 }
 
-class GooglePubSubEmulator extends EventEmitter {
+class GooglePubSubEmulator {
   private cmd?: execa.ExecaChildProcess;
-  private _state: GooglePubSubEmulatorStates = GooglePubSubEmulatorStates.Stopped;
+  private _port?: number;
+  private stateSubject = new BehaviorSubject(GooglePubSubEmulatorStates.Stopped);
 
-  constructor(private options: GooglePubSubEmulatorOptions) { super(); }
+  public log = new PassThrough();
+
+  constructor(private options: GooglePubSubEmulatorOptions) { }
 
   public async start() {
+    this.stateSubject.next(GooglePubSubEmulatorStates.Starting);
+
     const params = this.buildCommandParams();
     this.cmd = execa('gcloud', params, { all: true });
-    this.setState(GooglePubSubEmulatorStates.Starting);
-
-    if (this.options.debug) {
-      this.cmd.stdout && this.cmd.stdout.pipe(process.stdout);
-      this.cmd.stderr && this.cmd.stderr.pipe(process.stderr);
-    }
+    this.cmd.all?.pipe(this.log);
 
     try {
       await this.waitForEmulateToStart();
       await this.initEnvironment();
-      this.setState(GooglePubSubEmulatorStates.Running);
+      this.stateSubject.next(GooglePubSubEmulatorStates.Running);
     } catch (error) {
-      this.setState(GooglePubSubEmulatorStates.Errored);
+      this.stateSubject.next(GooglePubSubEmulatorStates.Errored);
       return Promise.reject(error);
     }
   }
@@ -75,16 +78,19 @@ class GooglePubSubEmulator extends EventEmitter {
     this.cmd.kill();
     delete this.cmd;
     this.teardownEnvironment();
-    this.setState(GooglePubSubEmulatorStates.Stopped)
+    this.stateSubject.next(GooglePubSubEmulatorStates.Stopped);
+  }
+
+  public get port() {
+    return this._port;
   }
 
   public get state() {
-    return this._state;
+    return this.stateSubject.asObservable();
   }
 
-  private setState(state: GooglePubSubEmulatorStates) {
-    this._state = state;
-    this.emit(state);
+  public get currentState() {
+    return this.stateSubject.value;
   }
 
   private buildCommandParams() {
@@ -115,6 +121,7 @@ class GooglePubSubEmulator extends EventEmitter {
       const [key, value] = item.split('=');
       return {...agg, [key]: value};
     }, {});
+
     Object.assign(process.env, env);
   }
 
@@ -124,12 +131,17 @@ class GooglePubSubEmulator extends EventEmitter {
 
   private waitForEmulateToStart = () => {
     return new Promise<void>((resolve, reject) => {
-      if (!(this.cmd && this.cmd.all)) {
+      if (!this.cmd?.all) {
         return reject(new EmulatorNotInitializedError());
       }
 
       const waitForStarted = (data: Buffer) => {
         if (data.toString().includes('Server started, listening on ')) {
+          const match = data.toString().match(/listening on (\d+)/);
+          if (match && match[1]) {
+            this._port = parseInt(match[1]);
+          }
+
           this.cmd && this.cmd.all && this.cmd.all.off('data', waitForStarted);
           return resolve();
         }
