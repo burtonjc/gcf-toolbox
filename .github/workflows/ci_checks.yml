@@ -28,7 +28,9 @@ jobs:
         run: npm install
       - name: lerna bootstrap
         run: lerna bootstrap
-      - name: Lint
-        run: npx eslint . --ext .ts
-      - name: Test
-        run: npm test
+      - name: Lint Check
+        run: npm run lint
+      - name: Format Check
+        run: npm run format:check
+      # - name: Test
+      #   run: npm test
