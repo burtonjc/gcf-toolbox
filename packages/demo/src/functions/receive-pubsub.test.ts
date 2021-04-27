@@ -1,18 +1,18 @@
-import { receivePubSub } from "./receive-pubsub";
+import { receivePubSub } from './receive-pubsub';
 
-describe("Receive pubsub", () => {
+describe('Receive pubsub', () => {
   beforeEach(() => {
-    jest.spyOn(console, "log").mockImplementation();
+    jest.spyOn(console, 'log').mockImplementation();
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("receivePubSub: should print a name", async () => {
-    const name = "Bob";
+  it('receivePubSub: should print a name', async () => {
+    const name = 'Bob';
     const event = {
-      data: Buffer.from(JSON.stringify({ name })).toString("base64"),
+      data: Buffer.from(JSON.stringify({ name })).toString('base64'),
     };
 
     await receivePubSub(event, {});
@@ -21,14 +21,14 @@ describe("Receive pubsub", () => {
     expect(console.log).toHaveBeenCalledWith(`Hello, ${name}!`);
   });
 
-  it("receivePubSub: should default to hello world", async () => {
+  it('receivePubSub: should default to hello world', async () => {
     const event = {
-      data: Buffer.from(JSON.stringify({})).toString("base64"),
+      data: Buffer.from(JSON.stringify({})).toString('base64'),
     };
 
     await receivePubSub(event, {});
 
     expect(console.log).toHaveBeenCalledTimes(1);
-    expect(console.log).toHaveBeenCalledWith("Hello, World!");
+    expect(console.log).toHaveBeenCalledWith('Hello, World!');
   });
 });

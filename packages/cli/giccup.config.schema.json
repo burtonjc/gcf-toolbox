@@ -68,7 +68,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [ "runtime" ]
+      "required": ["runtime"]
     },
     "cloud-event-trigger": {
       "type": "object",
@@ -108,11 +108,11 @@
         }
       },
       "additionalProperties": false,
-      "required": [ "event", "resource" ]
+      "required": ["event", "resource"]
     },
     "http-trigger": {
       "type": "string",
-      "enum": [ "http" ],
+      "enum": ["http"],
       "additionalProperties": false
     },
     "pubsub-trigger": {
@@ -124,7 +124,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [ "topic" ]
+      "required": ["topic"]
     },
     "storage-trigger": {
       "type": "object",
@@ -135,7 +135,7 @@
         }
       },
       "additionalProperties": false,
-      "required": [ "bucket" ]
+      "required": ["bucket"]
     }
   }
 }
