@@ -29,6 +29,6 @@ jobs:
       - name: lerna bootstrap
         run: lerna bootstrap
       - name: Lint
-        uses: stefanoeb/eslint-action@1.0.2
+        run: npx eslint . --ext .ts
       - name: Test
         run: npm test
