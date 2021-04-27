@@ -1,40 +1,34 @@
-import anyTest, { TestInterface } from 'ava';
-import { createSandbox, SinonSandbox } from 'sinon';
+import { receivePubSub } from "./receive-pubsub";
 
-import { receivePubSub } from './receive-pubsub';
+describe("Receive pubsub", () => {
+  beforeEach(() => {
+    jest.spyOn(console, "log").mockImplementation();
+  });
 
-// These have to be serial because they are stubbing a global resource (console)
-const test = anyTest.serial as TestInterface<{ sinon: SinonSandbox, }>;
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-test.beforeEach((t) => {
-  t.context.sinon = createSandbox();
-});
+  it("receivePubSub: should print a name", async () => {
+    const name = "Bob";
+    const event = {
+      data: Buffer.from(JSON.stringify({ name })).toString("base64"),
+    };
 
-test.afterEach.always((t) => {
-  t.context.sinon.restore();
-});
+    await receivePubSub(event, {});
 
-test('receivePubSub: should print a name', async t => {
-  const log = t.context.sinon.stub(console, 'log');
-  const name = 'Bob';
-  const event = {
-    data: Buffer.from(JSON.stringify({ name })).toString('base64'),
-  };
+    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(console.log).toHaveBeenCalledWith(`Hello, ${name}!`);
+  });
 
-  await receivePubSub(event, { });
+  it("receivePubSub: should default to hello world", async () => {
+    const event = {
+      data: Buffer.from(JSON.stringify({})).toString("base64"),
+    };
 
-  t.is(log.callCount, 1);
-  t.is(log.firstCall.args[0], `Hello, ${name}!`);
-});
+    await receivePubSub(event, {});
 
-test('receivePubSub: should default to hello world', async t => {
-  const log = t.context.sinon.stub(console, 'log');
-  const event = {
-    data: Buffer.from(JSON.stringify({})).toString('base64'),
-  };
-
-  await receivePubSub(event, { });
-
-  t.is(log.callCount, 1);
-  t.is(log.firstCall.args[0], 'Hello, World!');
+    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(console.log).toHaveBeenCalledWith("Hello, World!");
+  });
 });

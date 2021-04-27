@@ -24,7 +24,7 @@
   "scripts": {
     "clean": "rm -rf lib",
     "prepare": "tsc",
-    "test": "npx jest"
+    "test": "jest"
   },
   "bugs": {
     "url": "https://github.com/burtonjc/gcf-tools/issues"
@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@gcf-tools/cli": "*",
+    "@gcf-tools/gcloud-pubsub-emulator": "^0.0.0",
     "@google-cloud/functions-framework": "^1.3.2",
     "@types/uuid": "^3.4.5"
   }
