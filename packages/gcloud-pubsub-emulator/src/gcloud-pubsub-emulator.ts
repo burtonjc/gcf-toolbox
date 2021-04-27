@@ -128,7 +128,7 @@ class GooglePubSubEmulator extends EventEmitter {
     Object.assign(process.env, env);
   }
 
-  private async teardownEnvironment() {
+  private teardownEnvironment() {
     delete process.env.PUBSUB_EMULATOR_HOST;
   }
 
