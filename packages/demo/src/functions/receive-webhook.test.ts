@@ -1,171 +1,92 @@
-import { resolve } from 'path';
+import { resolve } from "path";
 
-import { Message }                      from '@google-cloud/pubsub';
-import anyTest, { TestInterface }       from 'ava';
-import execa                            from 'execa';
-import { Request, Response, }           from 'express';
-import { IncomingHttpHeaders }          from 'http2';
-import { createSandbox, SinonSandbox }  from 'sinon';
-import uuidv4                           from 'uuid/v4';
+import { Message } from "@google-cloud/pubsub";
+import { Request, Response } from "express";
+import { IncomingHttpHeaders } from "http2";
+import uuidv4 from "uuid/v4";
+import GooglePubSubEmulator from "@gcf-tools/gcloud-pubsub-emulator";
 
-import { TOPIC_NAME }             from '../constants';
-import { getTopic }               from '../helpers/pubsub';
-import { receiveWebhook }         from './receive-webhook';
+import { TOPIC_NAME } from "../constants";
+import { getTopic } from "../helpers/pubsub";
+import { receiveWebhook } from "./receive-webhook";
 
-const test = anyTest as TestInterface<{
-  pubsubEmulator: execa.ExecaChildProcess;
-  sinon: SinonSandbox;
-}>;
-
-test.before(async (t) => {
-  const cmd = execa('gcloud', [
-    'beta',
-    'emulators',
-    'pubsub',
-    'start',
-    `--data-dir=${resolve(__dirname, '..', '.tmp')}`,
-  ], {
-    stdin: 'ignore',
-  });
-  t.context.pubsubEmulator = cmd;
-  t.log('Starting PubSub emulator.')
-  await waitForEmulatorToStart(cmd);
-  await initEmulatorEnv();
-  t.log('Successfully started the PubSub emulator.')
-});
-
-test.after.always((t) => {
-  const cmd = t.context.pubsubEmulator;
-
-  if (cmd && !cmd.killed) {
-    cmd.kill()
-  }
-
-  return cmd.catch((e) => {
-    if (e.signal !== 'SIGTERM') {
-      throw e;
-    }
-  }).then(() => {
-    t.log('Successfully shutdown PubSub emulator.');
-  });
-});
-
-test.beforeEach((t) => {
-  t.context.sinon = createSandbox();
-});
-
-test.afterEach.always((t) => {
-  t.context.sinon.restore();
-});
-
-test('receiveWebhook: should publish a name', async t => {
-  const name = 'Bob';
-  const transactionId = uuidv4();
-  const req = {
-    header: (name: string) => req.headers[name],
-    headers: { 'x-transaction-id': transactionId } as IncomingHttpHeaders,
-    query: { name },
-  };
-  const res = {
-    headers: { } as IncomingHttpHeaders,
-    json: t.context.sinon.stub(),
-    setHeader: (name: string, value: string) => res.headers[name] = value,
-  };
-  const next = t.context.sinon.stub();
-
-  const watcher = await watchForMessages(TOPIC_NAME);
-  await receiveWebhook(req as Request, res as unknown as Response, next);
-  const messages = (await watcher.stop()).filter((m) => {
-    const attributes = m.attributes as { [key: string]: string };
-    return attributes.transactionId === transactionId;
+describe("Receive webhook", () => {
+  const pubsub = new GooglePubSubEmulator({
+    dataDir: resolve(__dirname, "..", ".tmp"),
+    project: "test-project",
   });
 
-  t.is(res.json.callCount, 1, 'Expected JSON response.');
-  t.deepEqual(res.json.firstCall.args[0], { message: `Hello, ${ name }!` });
-  t.is(messages.length, 1, 'Expected one message to be published.')
-  const data = JSON.parse(messages[0].data.toString());
-  t.deepEqual(data, { name: 'Bob' });
-});
-
-test('receiveWebhook: should default to hello world', async t => {
-  const transactionId = uuidv4();
-  const req = {
-    header: (name: string) => req.headers[name],
-    headers: { 'x-transaction-id': transactionId } as IncomingHttpHeaders,
-    query: { },
-  };
-  const res = {
-    headers: { } as IncomingHttpHeaders,
-    json: t.context.sinon.stub(),
-    setHeader: (name: string, value: string) => res.headers[name] = value,
-  };
-  const next = t.context.sinon.stub();
-
-  const watcher = await watchForMessages(TOPIC_NAME);
-  await receiveWebhook(req as Request, res as unknown as Response, next);
-  const messages = (await watcher.stop()).filter((m) => {
-    const attributes = m.attributes as { [key: string]: string };
-    return attributes.transactionId === transactionId;
+  beforeAll(() => pubsub.start());
+  afterAll(() => {
+    console.log("afterall");
+    return pubsub.stop();
   });
 
-  t.is(res.json.callCount, 1);
-  t.deepEqual(res.json.firstCall.args[0], { message: `Hello, World!`, });
-  t.is(messages.length, 1, 'Expected one message to be published.')
-  const data = JSON.parse(messages[0].data.toString());
-  t.deepEqual(data, { });
-});
+  it("publishes a name", async () => {
+    const name = "Bob";
+    const transactionId = uuidv4();
+    const req = {
+      header: (name: string) => req.headers[name],
+      headers: { "x-transaction-id": transactionId } as IncomingHttpHeaders,
+      query: { name },
+    };
+    const res = {
+      headers: {} as IncomingHttpHeaders,
+      json: jest.fn(),
+      setHeader: (name: string, value: string) => (res.headers[name] = value),
+    };
+    const next = jest.fn();
 
-const waitForEmulatorToStart = (cmd: execa.ExecaChildProcess) => {
-  return new Promise((resolve, reject) => {
-    let resolved = false;
-    let stdall = [] as string[];
-
-    if (cmd.all) {
-      cmd.all.on('data', (chunk: Buffer) => {
-        const message = chunk.toString();
-        stdall.push(message);
-        if (message.includes('Server started, listening on')) {
-          resolved = true;
-          resolve();
-        }
-      });
-    }
-
-    cmd.once('exit', () => {
-      if (!resolved) {
-        reject(`Failed to start PubSub emulator:\n${ stdall.join('\n') }`);
-      }
+    const watcher = await watchForMessages(TOPIC_NAME);
+    await receiveWebhook(req as Request, (res as unknown) as Response, next);
+    const messages = (await watcher.stop()).filter((m) => {
+      const attributes = m.attributes as { [key: string]: string };
+      return attributes.transactionId === transactionId;
     });
+
+    expect(res.json).toHaveBeenCalledTimes(1);
+    expect(res.json.mock.calls[0][0].message).toEqual(`Hello, ${name}!`);
+    expect(messages.length).toBe(1);
+    const data = JSON.parse(messages[0].data.toString());
+    expect(data).toEqual({ name: "Bob" });
   });
-}
 
-const initEmulatorEnv = async() => {
-  // const output = await execa('gcloud', [
-  //   'beta',
-  //   'emulators',
-  //   'pubsub',
-  //   'env-init',
-  //   `--data-dir=${resolve(__dirname, '..', '.tmp')}`,
-  // ]);
+  it("defaults to hello world", async () => {
+    const transactionId = uuidv4();
+    const req = {
+      header: (name: string) => req.headers[name],
+      headers: { "x-transaction-id": transactionId } as IncomingHttpHeaders,
+      query: {},
+    };
+    const res = {
+      headers: {} as IncomingHttpHeaders,
+      json: jest.fn(),
+      setHeader: (name: string, value: string) => (res.headers[name] = value),
+    };
+    const next = jest.fn();
 
-  // const env = output.stdout.split('\n').reduce((acc, param) => {
-  //   const [key, value] = param.replace('export ', '').split('=');
-  //   acc[key] = value.replace('::1', 'localhost');
-  //   return acc;
-  // }, {} as { [key: string]: string });
+    const watcher = await watchForMessages(TOPIC_NAME);
+    await receiveWebhook(req as Request, (res as unknown) as Response, next);
+    const messages = (await watcher.stop()).filter((m) => {
+      const attributes = m.attributes as { [key: string]: string };
+      return attributes.transactionId === transactionId;
+    });
 
-  // console.log('PubSub env:', env);
-  const env = { PUBSUB_EMULATOR_HOST: 'localhost:8085' };
-
-  Object.assign(process.env, env);
-}
+    expect(res.json).toHaveBeenCalledTimes(1);
+    expect(res.json.mock.calls[0][0].message).toEqual("Hello, World!");
+    expect(messages.length).toBe(1);
+    const data = JSON.parse(messages[0].data.toString());
+    expect(data).toEqual({});
+  });
+});
 
 const getSubscription = async (topicName: string) => {
   const topic = await getTopic(topicName);
   const subscriptionName = `test-${topicName}-${uuidv4()}-sub`;
 
-  return topic.createSubscription(subscriptionName)
-    .then((data) => data[0] )
+  return topic
+    .createSubscription(subscriptionName)
+    .then((data) => data[0])
     .catch(async (err) => {
       if (err && err.code === 6) {
         return topic.subscription(subscriptionName);
@@ -173,13 +94,13 @@ const getSubscription = async (topicName: string) => {
 
       throw err;
     });
-}
+};
 
 const watchForMessages = async (topicName: string) => {
   const subscription = await getSubscription(topicName);
   let messages = [] as Message[];
 
-  subscription.on('message', (m: Message) => {
+  subscription.on("message", (m: Message) => {
     messages.push(m);
   });
 
@@ -191,6 +112,6 @@ const watchForMessages = async (topicName: string) => {
           resolve(messages);
         }, 500);
       });
-    }
+    },
   };
-}
+};

@@ -31,7 +31,7 @@
   "scripts": {
     "clean": "rm -rf lib",
     "prepare": "tsc",
-    "test": "npx jest"
+    "test": "jest"
   },
   "bugs": {
     "url": "https://github.com/burtonjc/gcf-tools/issues"

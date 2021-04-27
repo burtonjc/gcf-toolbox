@@ -2,16 +2,13 @@ import { EventEmitter } from "events";
 
 import execa = require("execa");
 
-import {
-  EmulatorNotInitializedError,
-  PortAlreadyInUseError,
-} from './errors';
+import { EmulatorNotInitializedError, PortAlreadyInUseError } from "./errors";
 
 export enum GooglePubSubEmulatorStates {
-  Errored   = 'errored',
-  Running   = 'running',
-  Starting  = 'starting',
-  Stopped   = 'stopped',
+  Errored = "errored",
+  Running = "running",
+  Starting = "starting",
+  Stopped = "stopped",
 }
 
 export interface GooglePubSubEmulatorOptions {
@@ -43,13 +40,17 @@ export interface GooglePubSubEmulatorOptions {
 
 class GooglePubSubEmulator extends EventEmitter {
   private cmd?: execa.ExecaChildProcess;
-  private _state: GooglePubSubEmulatorStates = GooglePubSubEmulatorStates.Stopped;
+  private _state: GooglePubSubEmulatorStates =
+    GooglePubSubEmulatorStates.Stopped;
 
-  constructor(private options: GooglePubSubEmulatorOptions) { super(); }
+  constructor(private options: GooglePubSubEmulatorOptions) {
+    super();
+  }
 
+  // TODO: need to verify dataDir exists
   public async start() {
     const params = this.buildCommandParams();
-    this.cmd = execa('gcloud', params, { all: true });
+    this.cmd = execa("gcloud", params, { all: true });
     this.setState(GooglePubSubEmulatorStates.Starting);
 
     if (this.options.debug) {
@@ -69,13 +70,13 @@ class GooglePubSubEmulator extends EventEmitter {
 
   public stop() {
     if (!this.cmd) {
-      console.log('Emulator not running.');
+      console.log("Emulator not running.");
       return Promise.resolve();
     }
     this.cmd.kill();
     delete this.cmd;
     this.teardownEnvironment();
-    this.setState(GooglePubSubEmulatorStates.Stopped)
+    this.setState(GooglePubSubEmulatorStates.Stopped);
   }
 
   public get state() {
@@ -88,16 +89,16 @@ class GooglePubSubEmulator extends EventEmitter {
   }
 
   private buildCommandParams() {
-    const params = ['beta', 'emulators', 'pubsub', 'start'];
+    const params = ["beta", "emulators", "pubsub", "start"];
 
     if (this.options.dataDir) {
-      params.push('--data-dir=' + this.options.dataDir);
+      params.push("--data-dir=" + this.options.dataDir);
     }
 
     if (this.options.debug) {
-      params.push('--log-http');
-      params.push('--user-output-enabled');
-      params.push('--verbosity=debug');
+      params.push("--log-http");
+      params.push("--user-output-enabled");
+      params.push("--verbosity=debug");
     }
 
     if (this.options.hostPort) {
@@ -110,11 +111,20 @@ class GooglePubSubEmulator extends EventEmitter {
   }
 
   private async initEnvironment() {
-    const { stdout } = await execa('gcloud', ['beta', 'emulators', 'pubsub', 'env-init']);
-    const env = stdout.trim().replace(/export\s/g, '').split('\n').reduce((agg, item) => {
-      const [key, value] = item.split('=');
-      return {...agg, [key]: value};
-    }, {});
+    const { stdout } = await execa("gcloud", [
+      "beta",
+      "emulators",
+      "pubsub",
+      "env-init",
+    ]);
+    const env = stdout
+      .trim()
+      .replace(/export\s/g, "")
+      .split("\n")
+      .reduce((agg, item) => {
+        const [key, value] = item.split("=");
+        return { ...agg, [key]: value };
+      }, {});
     Object.assign(process.env, env);
   }
 
@@ -129,20 +139,20 @@ class GooglePubSubEmulator extends EventEmitter {
       }
 
       const waitForStarted = (data: Buffer) => {
-        if (data.toString().includes('Server started, listening on ')) {
-          this.cmd && this.cmd.all && this.cmd.all.off('data', waitForStarted);
+        if (data.toString().includes("Server started, listening on ")) {
+          this.cmd && this.cmd.all && this.cmd.all.off("data", waitForStarted);
           return resolve();
         }
 
-        if (data.toString().includes('java.io.IOException: Failed to bind')) {
-          this.cmd && this.cmd.all && this.cmd.all.off('data', waitForStarted);
+        if (data.toString().includes("java.io.IOException: Failed to bind")) {
+          this.cmd && this.cmd.all && this.cmd.all.off("data", waitForStarted);
           return reject(new PortAlreadyInUseError());
         }
-      }
+      };
 
       this.cmd.all.on("data", waitForStarted);
     });
-  }
+  };
 }
 
 export default GooglePubSubEmulator;
