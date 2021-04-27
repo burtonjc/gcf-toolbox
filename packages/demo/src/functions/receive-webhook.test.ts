@@ -18,7 +18,6 @@ describe("Receive webhook", () => {
 
   beforeAll(() => pubsub.start());
   afterAll(() => {
-    console.log("afterall");
     return pubsub.stop();
   });
 
