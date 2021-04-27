@@ -1,19 +1,19 @@
-import { resolve } from "path";
+import { IncomingHttpHeaders } from 'http2';
+import { resolve } from 'path';
 
-import { Message } from "@google-cloud/pubsub";
-import { Request, Response } from "express";
-import { IncomingHttpHeaders } from "http2";
-import uuidv4 from "uuid/v4";
-import GooglePubSubEmulator from "@gcf-tools/gcloud-pubsub-emulator";
+import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
+import { Message } from '@google-cloud/pubsub';
+import { Request, Response } from 'express';
+import uuidv4 from 'uuid/v4';
 
-import { TOPIC_NAME } from "../constants";
-import { getTopic } from "../helpers/pubsub";
-import { receiveWebhook } from "./receive-webhook";
+import { TOPIC_NAME } from '../constants';
+import { getTopic } from '../helpers/pubsub';
+import { receiveWebhook } from './receive-webhook';
 
-describe("Receive webhook", () => {
+describe('Receive webhook', () => {
   const pubsub = new GooglePubSubEmulator({
-    dataDir: resolve(__dirname, "..", ".tmp"),
-    project: "test-project",
+    dataDir: resolve(__dirname, '..', '.tmp'),
+    project: 'test-project',
   });
 
   beforeAll(() => pubsub.start());
@@ -21,12 +21,12 @@ describe("Receive webhook", () => {
     return pubsub.stop();
   });
 
-  it("publishes a name", async () => {
-    const name = "Bob";
+  it('publishes a name', async () => {
+    const name = 'Bob';
     const transactionId = uuidv4();
     const req = {
       header: (name: string) => req.headers[name],
-      headers: { "x-transaction-id": transactionId } as IncomingHttpHeaders,
+      headers: { 'x-transaction-id': transactionId } as IncomingHttpHeaders,
       query: { name },
     };
     const res = {
@@ -47,14 +47,14 @@ describe("Receive webhook", () => {
     expect(res.json.mock.calls[0][0].message).toEqual(`Hello, ${name}!`);
     expect(messages.length).toBe(1);
     const data = JSON.parse(messages[0].data.toString());
-    expect(data).toEqual({ name: "Bob" });
+    expect(data).toEqual({ name: 'Bob' });
   });
 
-  it("defaults to hello world", async () => {
+  it('defaults to hello world', async () => {
     const transactionId = uuidv4();
     const req = {
       header: (name: string) => req.headers[name],
-      headers: { "x-transaction-id": transactionId } as IncomingHttpHeaders,
+      headers: { 'x-transaction-id': transactionId } as IncomingHttpHeaders,
       query: {},
     };
     const res = {
@@ -72,7 +72,7 @@ describe("Receive webhook", () => {
     });
 
     expect(res.json).toHaveBeenCalledTimes(1);
-    expect(res.json.mock.calls[0][0].message).toEqual("Hello, World!");
+    expect(res.json.mock.calls[0][0].message).toEqual('Hello, World!');
     expect(messages.length).toBe(1);
     const data = JSON.parse(messages[0].data.toString());
     expect(data).toEqual({});
@@ -97,15 +97,15 @@ const getSubscription = async (topicName: string) => {
 
 const watchForMessages = async (topicName: string) => {
   const subscription = await getSubscription(topicName);
-  let messages = [] as Message[];
+  const messages = [] as Message[];
 
-  subscription.on("message", (m: Message) => {
+  subscription.on('message', (m: Message) => {
     messages.push(m);
   });
 
   return {
     stop: () => {
-      return new Promise<Message[]>((resolve, reject) => {
+      return new Promise<Message[]>((resolve) => {
         setTimeout(async () => {
           await subscription.delete();
           resolve(messages);

@@ -4,12 +4,13 @@ import chalk from 'chalk';
 import Listr, { ListrTask } from 'listr';
 import meow from 'meow';
 
-import { CommandExecutor } from "../../helpers/command.helper";
+import { CommandExecutor } from '../../helpers/command.helper';
 import { FunctionConfig, getProjectConfig } from '../../helpers/config.helper';
-import { depolyFunction, setGcloudProject } from "../../helpers/gcloud.helper";
+import { depolyFunction, setGcloudProject } from '../../helpers/gcloud.helper';
 
 export const deploy: CommandExecutor = async () => {
-  const cli =  meow(`
+  const cli = meow(
+    `
     ${chalk.underline(`Usage`)}
       $ giccup deploy <resource> [options] ...
 
@@ -26,26 +27,38 @@ export const deploy: CommandExecutor = async () => {
       giccup deploy                               Deploy all resources for defaultProject
       giccup deploy functions --project=proj-1    Deploy all functions for proj-1
       giccup deploy functions fun1 fun2           Deploy the fun1 and fun2 functions for defaultProject
-  `, {
-    flags: {
-      help: { alias: '-h' },
-      project: { alias: '-p' },
+  `,
+    {
+      flags: {
+        help: { alias: '-h' },
+        project: { alias: '-p' },
+      },
     }
-  });
+  );
 
-  const [ , resource, ...args ] = cli.input;
+  const [, resource, ...args] = cli.input;
 
-  if (resource && !(['functions'].includes(resource))) {
-    console.error('\n', chalk.red(`Error: Unrecognized resource type "${resource}".`));
+  if (resource && !['functions'].includes(resource)) {
+    console.error(
+      '\n',
+      chalk.red(`Error: Unrecognized resource type "${resource}".`)
+    );
     cli.showHelp(1);
   }
 
   const config = getProjectConfig(cli.flags.project);
 
-  const tasks = new Listr([{
-    title: 'Set project in gcloud',
-    task: () => setGcloudProject(config.projectId),
-  }], { collapse: false } as any);
+  const tasks = new Listr(
+    [
+      {
+        title: 'Set project in gcloud',
+        task: () => setGcloudProject(config.projectId),
+      },
+    ],
+    // Bug in the typings where collapse is unknown
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { collapse: false } as any
+  );
 
   if (!resource || resource === 'functions') {
     if (!config.functions.length) {
@@ -66,28 +79,39 @@ export const deploy: CommandExecutor = async () => {
     console.log();
     console.error(chalk.red('Failed to deploy functions:', inspect(e)));
   }
-}
+};
 
-const buildTasksToDeployFunctions = (configs: FunctionConfig[], names?: string[]): ListrTask<any>[] => {
+const buildTasksToDeployFunctions = (
+  configs: FunctionConfig[],
+  names?: string[]
+): ListrTask[] => {
   if (names && names.length) {
     validateFunctionNames(configs, names);
-    configs = configs.filter((c) => names.includes(c.name))
+    configs = configs.filter((c) => names.includes(c.name));
   }
 
-  return configs.map((c) => ({
-    title: c.name,
-    task: () => depolyFunction(c),
-  } as ListrTask<any>));
-}
+  return configs.map(
+    (c) =>
+      ({
+        title: c.name,
+        task: () => depolyFunction(c),
+      } as ListrTask)
+  );
+};
 
 const validateFunctionNames = (configs: FunctionConfig[], names: string[]) => {
   for (const name of names) {
-    const config = configs.find(c => c.name === name);
+    const config = configs.find((c) => c.name === name);
     if (!config) {
-      console.error('\n', chalk.red(`Error: No function named "${name}" found in giccup.config.json.`))
+      console.error(
+        '\n',
+        chalk.red(
+          `Error: No function named "${name}" found in giccup.config.json.`
+        )
+      );
       process.exit(1);
     }
   }
-}
+};
 
 export default deploy;

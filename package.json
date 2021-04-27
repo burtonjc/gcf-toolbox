@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "lerna exec -- npm run build",
+    "lint": "eslint . --ext .ts",
     "publish": "lerna run build && lerna publish",
     "test": "jest"
   },
