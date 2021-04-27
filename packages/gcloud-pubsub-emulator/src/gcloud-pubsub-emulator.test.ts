@@ -1,10 +1,8 @@
-import GCloudPubSubEmulator from '../src/gcloud-pubsub-emulator';
-
 describe('gcloud-pubsub-emulator', () => {
   describe('#start', () => {
     test.todo('fails helpfully if emulator is not installed');
 
-    test.todo('creates data dir if it doesn\'t exist');
+    test.todo("creates data dir if it doesn't exist");
   });
 
   describe('#stop', () => {

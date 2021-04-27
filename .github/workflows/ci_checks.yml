@@ -1,0 +1,36 @@
+name: CI Checks
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  Checks:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [14.x]
+    steps:
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        id: workspace-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ matrix.node-version }}-workspace-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.node-version }}-workspace-
+      - name: Install Dependencies
+        run: npm install
+      - name: lerna bootstrap
+        run: lerna bootstrap
+      - name: Lint Check
+        run: npm run lint
+      - name: Format Check
+        run: npm run format:check
+      # - name: Test
+      #   run: npm test

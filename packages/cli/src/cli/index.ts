@@ -1,12 +1,11 @@
 import chalk from 'chalk';
 import meow from 'meow';
 
-import {
-  executeSubCommand
-} from '../helpers/command.helper';
+import { executeSubCommand } from '../helpers/command.helper';
 
 export const cli = async () => {
-  const cli =  meow(`
+  const cli = meow(
+    `
     ${chalk.underline(`Usage`)}
       $ giccup <command> [options] ...
 
@@ -20,14 +19,16 @@ export const cli = async () => {
 
     ${chalk.underline('Examples')}
       giccup deploy        Deploy all resources to GCP
-  `, {
-    autoHelp: false,
-    flags: {
-      help: { alias: '-h' },
-    },
-  });
+  `,
+    {
+      autoHelp: false,
+      flags: {
+        help: { alias: '-h' },
+      },
+    }
+  );
 
-  if ( cli.input.length === 0 ) {
+  if (cli.input.length === 0) {
     cli.showHelp(0);
   }
 
@@ -37,4 +38,4 @@ export const cli = async () => {
     console.log(chalk.red(error.message));
     process.exit(1);
   }
-}
+};
