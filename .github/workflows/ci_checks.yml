@@ -32,5 +32,14 @@ jobs:
         run: npm run lint
       - name: Format Check
         run: npm run format:check
-      # - name: Test
-      #   run: npm test
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@master
+      - name: Install PubSub Emulator
+        run: gcloud components install pubsub-emulator
+
+      - name: Test
+        run: npm test
