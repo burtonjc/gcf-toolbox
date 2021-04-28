@@ -1,5 +1,4 @@
 import { IncomingHttpHeaders } from 'http2';
-import { resolve } from 'path';
 
 import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
 import { Message } from '@google-cloud/pubsub';
@@ -12,14 +11,11 @@ import { receiveWebhook } from './receive-webhook';
 
 describe('Receive webhook', () => {
   const pubsub = new GooglePubSubEmulator({
-    dataDir: resolve(__dirname, '..', '.tmp'),
     project: 'test-project',
   });
 
   beforeAll(() => pubsub.start());
-  afterAll(() => {
-    return pubsub.stop();
-  });
+  afterAll(() => pubsub.stop());
 
   it('publishes a name', async () => {
     const name = 'Bob';
