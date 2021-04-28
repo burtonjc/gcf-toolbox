@@ -25,28 +25,29 @@ export enum EmulatorStates {
 export interface EmulatorOptions {
   /**
    * The directory to be used to store/retrieve data/config for an emulator
-   * run.
+   * run. The default value is <USER_CONFIG_DIR>/emulators/pubsub. The value
+   * of USER_CONFIG_DIR can be found by running:
    *
-   * @default <USER_CONFIG_DIR>/emulators/pubsub
+   *   $ gcloud info --format='get(config.paths.global_config_dir)'
+   *
+   * @default <USER_CONFIG_DIR>/gcloud/emulators/pubsub
    */
   dataDir?: string;
 
   /**
-   * Enable more verbose console output
+   * Inable verbosity of emulator output and stream all stdout/stderr output
+   * from the emulator to the current process.
    *
    * @default false
    */
   debug?: boolean;
 
   /**
-   * The host:port to which the emulator should be bound.
+   * The `host:port` to which the emulator should be bound.
    *
    * @default localhost:8085
    */
-  hostPort?: number;
-
-  /** GCP project id */
-  project: string;
+  hostPort?: string;
 }
 
 class GooglePubSubEmulator {
@@ -55,12 +56,14 @@ class GooglePubSubEmulator {
   private _error$ = new BehaviorSubject<Error | null>(null);
   private _state$ = new BehaviorSubject(EmulatorStates.Stopped);
 
-  constructor(private options: EmulatorOptions) {}
+  constructor(private options: EmulatorOptions = {}) {
+    if (options.dataDir && !existsSync(options.dataDir)) {
+      throw new EmulatorDataDirNoExist();
+    }
+  }
 
-  // TODO: need to verify dataDir exists
-  public async start() {
-    const dataDir = this.ensureDataDir(this.options.dataDir);
-    const params = this.buildCommandParams({ ...this.options, dataDir });
+  public async start(): Promise<void> {
+    const params = this.buildCommandParams(this.options);
     this.cmd = execa('gcloud', params, { all: true });
     this._state$.next(EmulatorStates.Starting);
 
@@ -85,7 +88,7 @@ class GooglePubSubEmulator {
 
     try {
       await this.waitForEmulateToStart();
-      await this.initEnvironment();
+      await this.initEnvironment(this.options);
       this._state$.next(EmulatorStates.Running);
     } catch (error) {
       this._state$.next(EmulatorStates.Errored);
@@ -120,16 +123,6 @@ class GooglePubSubEmulator {
     return this._state$.asObservable();
   }
 
-  private ensureDataDir(path?: string): string {
-    if (!path) {
-      return mkdtempSync(join(tmpdir(), 'pubsub-emulator-'));
-    } else if (existsSync(path)) {
-      return path;
-    } else {
-      throw new EmulatorDataDirNoExist();
-    }
-  }
-
   private buildCommandParams(options: EmulatorOptions) {
     const params = ['beta', 'emulators', 'pubsub', 'start'];
 
@@ -147,18 +140,17 @@ class GooglePubSubEmulator {
       params.push(`--host-port=${options.hostPort}`);
     }
 
-    params.push(`--project=${options.project}`);
-
     return params;
   }
 
-  private async initEnvironment() {
-    const { stdout } = await execa('gcloud', [
-      'beta',
-      'emulators',
-      'pubsub',
-      'env-init',
-    ]);
+  private async initEnvironment(options: EmulatorOptions) {
+    const params = ['beta', 'emulators', 'pubsub', 'env-init'];
+
+    if (options.dataDir) {
+      params.push('--data-dir=' + options.dataDir);
+    }
+
+    const { stdout } = await execa('gcloud', params);
     const env = stdout
       .trim()
       .replace(/export\s/g, '')

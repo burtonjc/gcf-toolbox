@@ -132,7 +132,6 @@ const getEmulator = (config: ProjectConfig, options?: { debug?: boolean }) => {
   if (!emulator) {
     emulator = new GooglePubSubEmulator({
       debug: options && options.debug,
-      project: config.projectId,
     });
   }
 

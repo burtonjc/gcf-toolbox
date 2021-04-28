@@ -1,8 +1,17 @@
+import { EmulatorTestingEnvironment } from '../testing/emulator-testing-environment';
 import Emulator, { EmulatorStates } from './gcloud-pubsub-emulator';
 
 describe('gcloud-pubsub-emulator', () => {
-  const emulator = new Emulator({
-    project: 'fake-test-project',
+  const emulatorTestingEnv = new EmulatorTestingEnvironment();
+  let emulator: Emulator;
+
+  beforeAll(async () => {
+    await emulatorTestingEnv.setup({ start: false });
+    emulator = emulatorTestingEnv.emulator as Emulator;
+  });
+
+  afterAll(() => {
+    return emulatorTestingEnv.teardown();
   });
 
   describe('#start', () => {
