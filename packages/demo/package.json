@@ -39,6 +39,7 @@
     "@gcf-tools/cli": "^1.0.0-alpha.0",
     "@gcf-tools/gcloud-pubsub-emulator": "^1.0.0-alpha.0",
     "@google-cloud/functions-framework": "^1.0.0-alpha.0",
-    "@types/uuid": "^3.4.5"
+    "@types/uuid": "^3.4.5",
+    "mock-req-res": "^1.2.0"
   }
 }

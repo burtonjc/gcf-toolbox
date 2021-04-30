@@ -66,13 +66,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - uses: actions/checkout@v2
-      # - uses: actions/cache@v1
-      #   id: workspace-cache
-      #   with:
-      #     path: node_modules
-      #     key: ${{ runner.os }}-${{ matrix.node-version }}-workspace-${{ hashFiles('**/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-${{ matrix.node-version }}-workspace-
+      - uses: actions/cache@v1
+        id: workspace-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ matrix.node-version }}-workspace-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.node-version }}-workspace-
       - name: Install Dependencies
         run: npm ci
       - name: lerna bootstrap
