@@ -4,5 +4,5 @@
     "outDir": "./lib"
   },
   "exclude": ["src/**/*.test.*"],
-  "include": ["./src", "testing"]
+  "include": ["index.ts", "src", "testing"]
 }

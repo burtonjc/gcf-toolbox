@@ -1,6 +1,4 @@
-import { existsSync, mkdtempSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { existsSync } from 'fs';
 
 import execa = require('execa');
 import { BehaviorSubject } from 'rxjs';
@@ -50,7 +48,7 @@ export interface EmulatorOptions {
   hostPort?: string;
 }
 
-class GooglePubSubEmulator {
+export default class GooglePubSubEmulator {
   private cmd?: execa.ExecaChildProcess;
   private run?: Promise<void>;
   private _error$ = new BehaviorSubject<Error | null>(null);
@@ -188,5 +186,3 @@ class GooglePubSubEmulator {
     });
   };
 }
-
-export default GooglePubSubEmulator;
