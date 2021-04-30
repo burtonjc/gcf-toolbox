@@ -15,7 +15,7 @@ describe('Receive pubsub', () => {
       data: Buffer.from(JSON.stringify({ name })).toString('base64'),
     };
 
-    await receivePubSub(event, {});
+    await receivePubSub(event);
 
     expect(console.log).toHaveBeenCalledTimes(1);
     expect(console.log).toHaveBeenCalledWith(`Hello, ${name}!`);
@@ -26,7 +26,7 @@ describe('Receive pubsub', () => {
       data: Buffer.from(JSON.stringify({})).toString('base64'),
     };
 
-    await receivePubSub(event, {});
+    await receivePubSub(event);
 
     expect(console.log).toHaveBeenCalledTimes(1);
     expect(console.log).toHaveBeenCalledWith('Hello, World!');
