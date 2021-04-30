@@ -47,7 +47,9 @@ export const serve: CommandExecutor = async () => {
 
   const config = getProjectConfig(cli.flags.project);
   const env = config.environmentFile
-    ? safeLoad(readFileSync(config.environmentFile, 'utf8'))
+    ? (safeLoad(readFileSync(config.environmentFile, 'utf8')) as {
+        [key: string]: string;
+      })
     : {};
   console.log('env:', env);
   const emulator = getEmulator(config, {
@@ -132,7 +134,6 @@ const getEmulator = (config: ProjectConfig, options?: { debug?: boolean }) => {
   if (!emulator) {
     emulator = new GooglePubSubEmulator({
       debug: options && options.debug,
-      project: config.projectId,
     });
   }
 

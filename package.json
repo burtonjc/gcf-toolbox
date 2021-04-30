@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "build": "lerna exec -- npm run build",
-    "format": "prettier . --write",
-    "format:check": "prettier . --check",
+    "format": "prettier **/*.{js,ts} --write",
+    "format:check": "prettier **/*.{js,ts} --check",
     "lint": "eslint . --ext .ts",
     "publish": "lerna run build && lerna publish",
     "test": "jest"

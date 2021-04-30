@@ -1,7 +1,6 @@
 import { IncomingHttpHeaders } from 'http2';
-import { resolve } from 'path';
 
-import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
+import { EmulatorTestingEnvironment } from '@gcf-tools/gcloud-pubsub-emulator/testing';
 import { Message } from '@google-cloud/pubsub';
 import { Request, Response } from 'express';
 import uuidv4 from 'uuid/v4';
@@ -11,15 +10,10 @@ import { getTopic } from '../helpers/pubsub';
 import { receiveWebhook } from './receive-webhook';
 
 describe('Receive webhook', () => {
-  const pubsub = new GooglePubSubEmulator({
-    dataDir: resolve(__dirname, '..', '.tmp'),
-    project: 'test-project',
-  });
+  const emulatorTestingEnv = new EmulatorTestingEnvironment();
 
-  beforeAll(() => pubsub.start());
-  afterAll(() => {
-    return pubsub.stop();
-  });
+  beforeAll(() => emulatorTestingEnv.setup({ debug: true }));
+  afterAll(() => emulatorTestingEnv.teardown());
 
   it('publishes a name', async () => {
     const name = 'Bob';
@@ -37,7 +31,11 @@ describe('Receive webhook', () => {
     const next = jest.fn();
 
     const watcher = await watchForMessages(TOPIC_NAME);
-    await receiveWebhook(req as Request, (res as unknown) as Response, next);
+    await receiveWebhook(
+      (req as unknown) as Request,
+      (res as unknown) as Response,
+      next
+    );
     const messages = (await watcher.stop()).filter((m) => {
       const attributes = m.attributes as { [key: string]: string };
       return attributes.transactionId === transactionId;

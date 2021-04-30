@@ -1,6 +1,6 @@
 {
   "name": "@gcf-tools/gcloud-functions",
-  "version": "0.0.0",
+  "version": "1.0.0-alpha.0",
   "description": "Wrapper around gcloud functions commands to easily interact with GCF from NodeJS",
   "keywords": [
     "GCF",
@@ -26,8 +26,10 @@
     "url": "git+https://github.com/burtonjc/gcf-tools.git"
   },
   "scripts": {
+    "build": "tsc",
     "clean": "rm -rf lib",
-    "prepare": "tsc",
+    "prebuild": "npm run clean",
+    "prepare": "npm run build",
     "test": "jest"
   },
   "bugs": {
