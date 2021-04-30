@@ -27,7 +27,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
       - name: lerna bootstrap
-        run: lerna bootstrap
+        run: npx lerna bootstrap
       - name: Lint Check
         run: npm run lint
       - name: Format Check
