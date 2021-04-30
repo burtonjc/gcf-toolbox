@@ -12,7 +12,7 @@ import { receiveWebhook } from './receive-webhook';
 describe('Receive webhook', () => {
   const emulatorTestingEnv = new EmulatorTestingEnvironment();
 
-  beforeAll(() => emulatorTestingEnv.setup({ debug: true }));
+  beforeAll(() => emulatorTestingEnv.setup());
   afterAll(() => emulatorTestingEnv.teardown());
 
   it('publishes a name', async () => {
