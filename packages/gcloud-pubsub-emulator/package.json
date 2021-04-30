@@ -1,6 +1,6 @@
 {
   "name": "@gcf-tools/gcloud-pubsub-emulator",
-  "version": "0.0.0",
+  "version": "1.0.0-alpha.0",
   "description": "Wrapper around gcloud pubsub emulator to start and stop it from NodeJS",
   "keywords": [
     "GCP",

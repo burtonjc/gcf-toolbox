@@ -1,6 +1,6 @@
 {
   "name": "@gcf-tools/cli",
-  "version": "0.0.0",
+  "version": "1.0.0-alpha.0",
   "description": "CLI for streamlined development of Google Cloud Functions",
   "keywords": [
     "GCF",
@@ -37,7 +37,7 @@
     "url": "https://github.com/burtonjc/gcf-tools/issues"
   },
   "dependencies": {
-    "@gcf-tools/gcloud-pubsub-emulator": "*",
+    "@gcf-tools/gcloud-pubsub-emulator": "^1.0.0-alpha.0",
     "@google-cloud/pubsub": "^2.11.0",
     "chalk": "^2.4.2",
     "command-exists": "^1.2.8",
