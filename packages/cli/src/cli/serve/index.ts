@@ -153,12 +153,12 @@ const createPushSubscription = async (
   }
 
   const fnIndex = config.functions.findIndex((f) => f.name === fn.name);
-  const subscription = await pubsub.subscription(
-    `local-${fn.name}-${fn.trigger.topic}`,
-    { topic }
+  const subscription = await topic.subscription(
+    `local-${fn.name}-${fn.trigger.topic}`
   );
-  const pushEndpoint = `http://localhost:${8080 + fnIndex}`;
-  // const pushEndpoint = `http://localhost:3000/messages`;
+  const pushEndpoint = `http://localhost:${8080 + fnIndex}/projects/${
+    config.projectId
+  }/topics/${fn.trigger.topic}`;
   const [subscriptionExists] = await subscription.exists();
   if (subscriptionExists) {
     await subscription.modifyPushConfig({ pushEndpoint });
