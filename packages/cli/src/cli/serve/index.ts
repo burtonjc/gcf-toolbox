@@ -145,8 +145,8 @@ const createPushSubscription = async (
   fn: FunctionConfig<PubSubTrigger>
 ) => {
   const pubsub = new PubSub({ projectId: config.projectId });
-
   const topic = await pubsub.topic(fn.trigger.topic);
+
   const [topicExists] = await topic.exists();
   if (!topicExists) {
     await topic.create();
@@ -159,6 +159,7 @@ const createPushSubscription = async (
   const pushEndpoint = `http://localhost:${8080 + fnIndex}/projects/${
     config.projectId
   }/topics/${fn.trigger.topic}`;
+
   const [subscriptionExists] = await subscription.exists();
   if (subscriptionExists) {
     await subscription.modifyPushConfig({ pushEndpoint });
