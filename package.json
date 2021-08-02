@@ -3,9 +3,11 @@
   "private": true,
   "scripts": {
     "build": "lerna exec -- npm run build",
-    "format": "prettier **/*.{js,ts} --write",
     "format:check": "prettier **/*.{js,ts} --check",
+    "format": "prettier **/*.{js,ts} --write",
     "lint": "eslint . --ext .ts",
+    "postinstall": "lerna bootstrap",
+    "preinstall": "lerna clean & lerna run clean",
     "publish": "lerna run build && lerna publish",
     "test": "jest"
   },
