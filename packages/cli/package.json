@@ -29,7 +29,7 @@
     "url": "git+https://github.com/burtonjc/gcf-tools.git"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && chmod +x lib/index.js",
     "clean": "rm -rf lib",
     "prebuild": "npm run clean",
     "prepare": "npm run build",
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@gcf-tools/gcloud-pubsub-emulator": "^1.0.0-alpha.0",
-    "@google-cloud/pubsub": "^2.11.0",
+    "@google-cloud/pubsub": "^2.16.1",
     "chalk": "^2.4.2",
     "command-exists": "^1.2.8",
     "execa": "^3.2.0",
@@ -57,6 +57,6 @@
     "@types/meow": "^5.0.0"
   },
   "peerDependencies": {
-    "@google-cloud/functions-framework": "^1.7.1"
+    "@google-cloud/functions-framework": "^1.9.0"
   }
 }
