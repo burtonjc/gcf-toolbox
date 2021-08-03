@@ -18,7 +18,11 @@ export class Dashboard {
   ) {}
 
   public start() {
-    const grid = new contrib.grid({ rows: 4, cols: 2, screen: this.screen });
+    const grid = new contrib.grid({
+      rows: 2 + Math.ceil(this.functions.length / 2),
+      cols: 2,
+      screen: this.screen,
+    });
     this.screen.key(['escape', 'q', 'C-c'], async (ch, key) => {
       await this.stop();
     });
@@ -71,7 +75,7 @@ export class Dashboard {
     });
 
     const emulatorLog = grid.set(1, 0, 1, 2, contrib.log, {
-      label: 'PubSub Emulator Log',
+      label: ' PubSub Emulator ',
     } as contrib.Widgets.LogOptions);
     this.emulator.log.on('data', (chunk: Buffer) => {
       emulatorLog.log(chunk.toString());
@@ -81,7 +85,7 @@ export class Dashboard {
       const row = 2 + Math.floor(idx / 2);
       const column = (idx + 2) % 2;
       const functionLog = grid.set(row, column, 1, 1, contrib.log, {
-        label: `${f.name} Log`,
+        label: ` ${f.name} `,
       } as contrib.Widgets.LogOptions);
       f.log.on('data', (chunk: Buffer) => {
         functionLog.log(chunk.toString());
