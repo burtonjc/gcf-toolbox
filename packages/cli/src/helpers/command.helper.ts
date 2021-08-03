@@ -1,5 +1,4 @@
 import { resolve } from 'path';
-import { inspect } from 'util';
 
 import chalk from 'chalk';
 import { Result } from 'meow';
@@ -15,6 +14,7 @@ export const executeSubCommand = async (cli: Result, dir: string) => {
   try {
     const commandPath = resolve(dir, command);
     debug(`${command}:`, 'requiring task from', commandPath);
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const executor = require(commandPath).default as CommandExecutor;
     await executor();
   } catch (error) {
@@ -27,10 +27,10 @@ export const executeSubCommand = async (cli: Result, dir: string) => {
       throw error;
     }
   }
-}
+};
 
-export const debug = (...log: any[]) => {
-  if ( process.env.DEBUG ) {
-    console.log(chalk.blue('DEBUG: ', ...log));
+export const debug = (...log: unknown[]) => {
+  if (process.env.DEBUG) {
+    console.log(chalk.blue('DEBUG: ', ...log.toString()));
   }
-}
+};

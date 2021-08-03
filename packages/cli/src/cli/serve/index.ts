@@ -13,11 +13,12 @@ import {
   ProjectConfig,
   PubSubTrigger,
 } from '../../helpers/config.helper';
-import { LocalFunction } from './local-function';
 import { Dashboard } from './dashboard';
+import { LocalFunction } from './local-function';
 
 export const serve: CommandExecutor = async () => {
-  const cli =  meow(`
+  const cli = meow(
+    `
     Serve up a local environment to mimic how things run in GCP. This relies on
     the Google PubSub Emulator component in gcloud.
 
@@ -30,20 +31,26 @@ export const serve: CommandExecutor = async () => {
 
     ${chalk.underline('Global Options')}
       --help, -h                  Show help text
-  `, {
-    flags: {
-      help: { alias: '-h' },
-      project: { alias: '-p' },
-      verbose: { alias: '-v' },
+  `,
+    {
+      flags: {
+        help: { alias: '-h' },
+        project: { alias: '-p' },
+        verbose: { alias: '-v', default: false },
+      },
     }
-  });
+  );
 
   const config = getProjectConfig(cli.flags.project);
-  const env = config.environmentFile ? safeLoad(readFileSync(config.environmentFile, 'utf8')) : {};
-  const emulator = getEmulator(config, { debug: cli.flags.hasOwnProperty('verbose') });
+  const env = (config.environmentFile
+    ? safeLoad(readFileSync(config.environmentFile, 'utf8'))
+    : {}) as Record<string, string>;
+  const emulator = getEmulator(config, {
+    debug: cli.flags.verbose,
+  });
   const functions = config.functions.map((fc, index) => {
     return new LocalFunction(fc, {
-      debug: cli.flags.hasOwnProperty('verbose'),
+      debug: cli.flags.verbose,
       env,
       port: 8080 + index,
     });
@@ -54,8 +61,8 @@ export const serve: CommandExecutor = async () => {
   dashboard.start();
   await emulator.start();
 
-  const eventTriggerdFns = config.functions.filter((f) =>
-    (f.trigger as Object).hasOwnProperty('topic')
+  const eventTriggerdFns = config.functions.filter(
+    (f) => f.trigger && 'topic' in f.trigger
   ) as FunctionConfig<PubSubTrigger>[];
   const subscriptions = await Promise.all(
     eventTriggerdFns.map((fc) => createPushSubscription(config, fc))
@@ -65,7 +72,7 @@ export const serve: CommandExecutor = async () => {
   // const md = await subscriptions[0].getMetadata();
   // console.log(md);
 
-  functions.forEach(fun => fun.start());
+  functions.forEach((fun) => fun.start());
 
   // const tasks = new Listr([{
   //   title: 'Start PubSub emulator',
@@ -73,13 +80,13 @@ export const serve: CommandExecutor = async () => {
   // }, {
   //   title: 'Create PubSub triggers',
   //   task: async () => {
-      // const eventTriggerdFns = config.functions.filter((f) =>
-      //   (f.trigger as Object).hasOwnProperty('topic')
-      // ) as FunctionConfig<PubSubTrigger>[];
+  // const eventTriggerdFns = config.functions.filter((f) =>
+  //   (f.trigger as Object).hasOwnProperty('topic')
+  // ) as FunctionConfig<PubSubTrigger>[];
 
-      // for (const fn of eventTriggerdFns) {
-      //   await createPushSubscription(config, fn);
-      // }
+  // for (const fn of eventTriggerdFns) {
+  //   await createPushSubscription(config, fn);
+  // }
   //   },
   // }, {
   //   title: 'Serve Functions',
@@ -118,7 +125,7 @@ export const serve: CommandExecutor = async () => {
   //   await emulator.stop();
   //   console.log(chalk.green('Have a good one!'));
   // }
-}
+};
 
 /*****************************************************************************/
 
@@ -127,29 +134,32 @@ const getEmulator = (config: ProjectConfig, options?: { debug?: boolean }) => {
   if (!__emulator__) {
     __emulator__ = new GooglePubSubEmulator({
       debug: options && options.debug,
-      project: config.projectId,
     });
   }
 
   return __emulator__;
-}
+};
 
-const createPushSubscription = async (config: ProjectConfig, fn: FunctionConfig<PubSubTrigger>) => {
+const createPushSubscription = async (
+  config: ProjectConfig,
+  fn: FunctionConfig<PubSubTrigger>
+) => {
   const pubsub = new PubSub({ projectId: config.projectId });
-
   const topic = await pubsub.topic(fn.trigger.topic);
+
   const [topicExists] = await topic.exists();
   if (!topicExists) {
     await topic.create();
   }
 
-  const fnIndex = config.functions.findIndex(f => f.name === fn.name);
-  const subscription = await pubsub.subscription(
-    `local-${fn.name}-${fn.trigger.topic}`,
-    { topic }
+  const fnIndex = config.functions.findIndex((f) => f.name === fn.name);
+  const subscription = await topic.subscription(
+    `local-${fn.name}-${fn.trigger.topic}`
   );
-  const pushEndpoint = `http://localhost:${8080 + fnIndex}`;
-  // const pushEndpoint = `http://localhost:3000/messages`;
+  const pushEndpoint = `http://localhost:${8080 + fnIndex}/projects/${
+    config.projectId
+  }/topics/${fn.trigger.topic}`;
+
   const [subscriptionExists] = await subscription.exists();
   if (subscriptionExists) {
     await subscription.modifyPushConfig({ pushEndpoint });
@@ -158,6 +168,6 @@ const createPushSubscription = async (config: ProjectConfig, fn: FunctionConfig<
   }
 
   return subscription;
-}
+};
 
 export default serve;

@@ -4,10 +4,6 @@
     "declaration": false,
     "outDir": "./lib"
   },
-  "exclude": [
-    "src/**/*.test.*"
-  ],
-  "include": [
-    "./src"
-  ]
+  "exclude": ["src/**/*.test.*"],
+  "include": ["./src"]
 }

@@ -1,6 +1,9 @@
 import { resolve } from 'path';
 
-import { NoProjectSpecifiedError, ProjectNotFoundInConfigError } from '../cli/errors';
+import {
+  NoProjectSpecifiedError,
+  ProjectNotFoundInConfigError,
+} from '../cli/errors';
 
 export const CONFIG_FILE_NAME = 'giccup.config.json';
 export const CONFIG_SCHEMA_FILE_NAME = 'giccup.config.schema.json';
@@ -10,8 +13,6 @@ export interface EventTrigger {
   resource: string;
 }
 
-export type HttpTrigger = 'http';
-
 export interface PubSubTrigger {
   topic: string;
 }
@@ -20,7 +21,11 @@ export interface StorageTrigger {
   bucket: string;
 }
 
-export type TriggerType = EventTrigger | HttpTrigger | PubSubTrigger | StorageTrigger;
+export type TriggerType =
+  | EventTrigger
+  | PubSubTrigger
+  | StorageTrigger
+  | undefined;
 
 interface RawFunctionConfig<T extends TriggerType = TriggerType> {
   entryPoint?: string;
@@ -33,25 +38,26 @@ interface RawProjectConfig {
   environmentFile?: string;
   functions?: {
     [name: string]: RawFunctionConfig;
-  }
+  };
 }
 
 export interface RawGiccupConfig {
-  $schema: string,
+  $schema: string;
   defaultProject?: string;
   projects?: {
     [name: string]: RawProjectConfig;
-  }
+  };
 }
 
-export interface FunctionConfig<T extends TriggerType = TriggerType> extends RawFunctionConfig {
+export interface FunctionConfig<T extends TriggerType = TriggerType>
+  extends RawFunctionConfig {
   environmentFile?: string;
   name: string;
-  trigger: T; // Make this not optional in code for convenience
+  trigger: T;
 }
 
 export class ProjectConfig {
-  constructor(private _projectId: string, private config: RawProjectConfig) { }
+  constructor(private _projectId: string, private config: RawProjectConfig) {}
 
   public get environmentFile() {
     return this.config.environmentFile;
@@ -61,11 +67,16 @@ export class ProjectConfig {
     const functions = [] as FunctionConfig[];
 
     for (const key in this.config.functions) {
-      functions.push(Object.assign({
-        environmentFile: this.config.environmentFile,
-        name: key,
-        trigger: 'http',
-      }, this.config.functions[key]));
+      functions.push(
+        Object.assign(
+          {
+            environmentFile: this.config.environmentFile,
+            name: key,
+            trigger: undefined,
+          },
+          this.config.functions[key]
+        )
+      );
     }
 
     return functions;
@@ -78,6 +89,7 @@ export class ProjectConfig {
 
 export const getProjectConfig = (projectId?: string) => {
   const path = resolve(process.cwd(), CONFIG_FILE_NAME);
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const raw = require(path) as RawGiccupConfig;
   projectId = projectId || raw.defaultProject;
 
@@ -92,4 +104,4 @@ export const getProjectConfig = (projectId?: string) => {
   }
 
   return new ProjectConfig(projectId, project);
-}
+};

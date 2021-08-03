@@ -1,8 +1,4 @@
-import {
-  CreateSubscriptionOptions,
-  PubSub,
-  Topic,
-} from '@google-cloud/pubsub';
+import { CreateSubscriptionOptions, PubSub, Topic } from '@google-cloud/pubsub';
 
 import { PROJECT_ID } from '../constants';
 
@@ -16,9 +12,13 @@ export const getTopic = async (name: string) => {
   }
 
   return topic;
-}
+};
 
-export const getSubscription = async (topic: string | Topic, name: string, options: CreateSubscriptionOptions) => {
+export const getSubscription = async (
+  topic: string | Topic,
+  name: string,
+  options: CreateSubscriptionOptions
+) => {
   const pubsub = new PubSub({ projectId: PROJECT_ID });
 
   if (typeof topic === 'string') {
@@ -26,10 +26,10 @@ export const getSubscription = async (topic: string | Topic, name: string, optio
   }
 
   const subscription = await pubsub.subscription(name, { topic });
-  const [ exists ] = await subscription.exists();
+  const [exists] = await subscription.exists();
   if (!exists) {
     await subscription.create(options);
   }
 
   return subscription;
-}
+};

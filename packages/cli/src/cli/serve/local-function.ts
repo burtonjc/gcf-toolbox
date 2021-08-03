@@ -3,20 +3,20 @@ import { PassThrough } from 'stream';
 import execa, { ExecaChildProcess } from 'execa';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 
-import { FunctionConfig } from "../../helpers/config.helper";
+import { FunctionConfig } from '../../helpers/config.helper';
 
 export enum FunctionState {
-  Errored   = 'errored',
-  Running   = 'running',
-  Starting  = 'starting',
-  Stopped   = 'stopped',
-  Stopping   = 'stopping',
+  Errored = 'errored',
+  Running = 'running',
+  Starting = 'starting',
+  Stopped = 'stopped',
+  Stopping = 'stopping',
 }
 
 export interface LocalFunctionOptions {
-  debug?: boolean,
-  env?: { [prop: string]: string },
-  port: number,
+  debug?: boolean;
+  env?: { [prop: string]: string };
+  port: number;
 }
 
 export class LocalFunction {
@@ -28,12 +28,12 @@ export class LocalFunction {
   constructor(
     private config: FunctionConfig,
     private options: LocalFunctionOptions = {} as LocalFunctionOptions
-  ) { }
+  ) {}
 
   public async start() {
-    this.setState(FunctionState.Starting)
+    this.setState(FunctionState.Starting);
 
-    const { cmd, args } = this.getCommand()
+    const { cmd, args } = this.getCommand();
     this.process = execa(cmd, args, { all: true, env: this.options.env });
     this.process.all?.pipe(this.log);
 
@@ -76,15 +76,15 @@ export class LocalFunction {
     let args = [
       'functions-framework',
       `--target=${this.config.entryPoint || this.config.name}`,
-      `--port=${ this.options.port }`,
-    ]
+      `--port=${this.options.port}`,
+    ];
 
     if (this.config.source) {
-      args = [ ...args, `--source=${this.config.source}` ];
+      args = [...args, `--source=${this.config.source}`];
     }
 
-    if (this.config.trigger !== 'http') {
-      args = [ ...args, `--signature-type=event` ];
+    if (this.config.trigger) {
+      args = [...args, `--signature-type=event`];
     }
 
     return { cmd: 'npx', args };
@@ -107,9 +107,9 @@ export class LocalFunction {
           stdout.off('data', waitForStarted);
           return resolve();
         }
-      }
+      };
 
-      stdout.on("data", waitForStarted);
+      stdout.on('data', waitForStarted);
     });
   }
 }

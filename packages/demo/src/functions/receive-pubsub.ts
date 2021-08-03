@@ -1,11 +1,18 @@
-import { Context } from '@google-cloud/functions-framework';
+import { CloudFunctionsContext } from '@google-cloud/functions-framework';
 
-export const receivePubSub = (event: { data: string }, context: Context) => {
-  console.log('YO PUBSUB!');
-  console.log('event:', JSON.stringify(event));
-  console.log('context:', JSON.stringify(context));
-  const json = Buffer.from(event.data, 'base64').toString()
-  const data = JSON.parse(json);
+interface Event {
+  '@type': string;
+  attributes: Record<string, unknown>;
+  data: string;
+}
+
+export interface ReceivePubSubData {
+  name: string | undefined;
+}
+
+export const receivePubSub = (event: Event, context: CloudFunctionsContext) => {
+  const json = Buffer.from(event.data, 'base64').toString();
+  const data: ReceivePubSubData = JSON.parse(json);
 
   console.log(`Hello, ${data.name || 'World'}!`);
-}
+};

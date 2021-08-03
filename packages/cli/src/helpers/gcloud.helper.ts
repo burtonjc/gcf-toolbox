@@ -7,24 +7,26 @@ import { FunctionConfig } from './config.helper';
  * @param project The GCP project id.
  */
 export const setGcloudProject = (project: string) => {
-  return execa('gcloud', ['config', 'set', 'project', project])
-}
+  return execa('gcloud', ['config', 'set', 'project', project]);
+};
 
 export const depolyFunction = (config: FunctionConfig) => {
   const args = [
-    'functions', 'deploy', config.name,
-    `--runtime=${config.runtime}`
+    'functions',
+    'deploy',
+    config.name,
+    `--runtime=${config.runtime}`,
   ];
 
   if (config.entryPoint) {
-    args.push(`--entry-point=${config.entryPoint}`)
+    args.push(`--entry-point=${config.entryPoint}`);
   }
 
   if (config.source) {
-    args.push(`--source=${config.source}`)
+    args.push(`--source=${config.source}`);
   }
 
-  if (!config.trigger || config.trigger === 'http') {
+  if (!config.trigger) {
     args.push('--trigger-http');
   } else if ('topic' in config.trigger) {
     args.push(`--trigger-topic=${config.trigger.topic}`);
@@ -32,12 +34,12 @@ export const depolyFunction = (config: FunctionConfig) => {
     args.push(`--trigger-event=${config.trigger.event}`);
     args.push(`--trigger-resource=${config.trigger.resource}`);
   } else if ('bucket' in config.trigger) {
-    args.push(`--trigger-bucket=${config.trigger.bucket}`)
+    args.push(`--trigger-bucket=${config.trigger.bucket}`);
   }
 
   if (config.environmentFile) {
-    args.push(`--env-vars-file=${config.environmentFile}`)
+    args.push(`--env-vars-file=${config.environmentFile}`);
   }
 
   return execa('gcloud', args);
-}
+};

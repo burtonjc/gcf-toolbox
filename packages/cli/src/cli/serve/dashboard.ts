@@ -1,4 +1,4 @@
-import GooglePubSubEmulator, { GooglePubSubEmulatorStates } from '@gcf-tools/gcloud-pubsub-emulator';
+import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
 import { Subscription } from '@google-cloud/pubsub';
 import blessed from 'blessed';
 import contrib from 'blessed-contrib';
@@ -14,8 +14,8 @@ export class Dashboard {
 
   constructor(
     private emulator: GooglePubSubEmulator,
-    private functions: LocalFunction[],
-  ) { }
+    private functions: LocalFunction[]
+  ) {}
 
   public start() {
     const grid = new contrib.grid({ rows: 4, cols: 2, screen: this.screen });
@@ -25,27 +25,28 @@ export class Dashboard {
     this.screen.render();
 
     this.processTable = grid.set(0, 0, 1, 1, contrib.table, {
-      border: { type: "line", fg: "cyan" },
+      border: { type: 'line', fg: 'cyan' },
       columnSpacing: 4,
       columnWidth: [16, 8, 4],
       fg: 'grey',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       interactive: false as any,
       label: ' Active Processes ',
     } as contrib.Widgets.TableOptions);
 
     merge(
-      this.emulator.state,
-      ...this.functions.map(f => f.state)
+      this.emulator.state$,
+      ...this.functions.map((f) => f.state)
     ).subscribe(() => {
       const data = this.functions.map((fn) => [
         fn.name,
         fn.currentState,
-        `${fn.port}`
+        `${fn.port}`,
       ]);
       data.unshift([
         'PubSub Emulator',
         this.emulator.currentState,
-        `${this.emulator.port || '----'}`
+        `${this.emulator.port || '----'}`,
       ]);
       this.processTable?.setData({
         data,
@@ -55,7 +56,7 @@ export class Dashboard {
     });
 
     this.subscriptionTable = grid.set(0, 1, 1, 1, contrib.table, {
-      border: { type: "line", fg: "cyan" },
+      border: { type: 'line', fg: 'cyan' },
       // columnSpacing: 4,
       columnWidth: [12, 30],
       fg: 'grey',
@@ -69,7 +70,7 @@ export class Dashboard {
       headers: ['Topic', 'Push URL'],
     });
 
-    const emulatorLog = grid.set(1,0,1,2, contrib.log, {
+    const emulatorLog = grid.set(1, 0, 1, 2, contrib.log, {
       label: 'PubSub Emulator Log',
     } as contrib.Widgets.LogOptions);
     this.emulator.log.on('data', (chunk: Buffer) => {
@@ -85,14 +86,14 @@ export class Dashboard {
       f.log.on('data', (chunk: Buffer) => {
         functionLog.log(chunk.toString());
       });
-    })
+    });
 
     this.screen.render();
   }
 
   public set pushSubscriptions(subscriptions: Subscription[]) {
     this.subscriptionTable?.setData({
-      headers: [ 'Topic', 'URL' ],
+      headers: ['Topic', 'URL'],
       data: subscriptions.map((s) => [
         s.metadata?.topic?.split('/').pop() as string,
         s.metadata?.pushConfig?.pushEndpoint as string,
