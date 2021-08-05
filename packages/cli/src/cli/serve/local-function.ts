@@ -1,7 +1,5 @@
-import { PassThrough } from 'stream';
-
 import execa, { ExecaChildProcess } from 'execa';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
 
 import { FunctionConfig } from '../../helpers/config.helper';
 
@@ -22,8 +20,7 @@ export interface LocalFunctionOptions {
 export class LocalFunction {
   private stateSubject = new BehaviorSubject(FunctionState.Stopped);
   private process?: ExecaChildProcess;
-
-  public log = new PassThrough();
+  private _log$ = new ReplaySubject<string>();
 
   constructor(
     private config: FunctionConfig,
@@ -35,12 +32,18 @@ export class LocalFunction {
 
     const { cmd, args } = this.getCommand();
     this.process = execa(cmd, args, { all: true, env: this.options.env });
-    this.process.all?.pipe(this.log);
+    this.process.all?.on('data', (chunk: Buffer) => {
+      this._log$.next(chunk.toString());
+    });
+    this.process.catch((error) => {
+      this.setState(FunctionState.Errored);
+    });
 
     try {
       await this.waitForProcessReady();
       this.setState(FunctionState.Running);
     } catch (error) {
+      console.error(error);
       this.setState(FunctionState.Errored);
       return Promise.reject(error);
     }
@@ -56,6 +59,10 @@ export class LocalFunction {
     return Promise.resolve();
   }
 
+  public get log$() {
+    return this._log$.asObservable();
+  }
+
   public get name() {
     return this.config.name;
   }
@@ -64,7 +71,7 @@ export class LocalFunction {
     return this.options.port;
   }
 
-  public get state() {
+  public get state$() {
     return this.stateSubject.asObservable();
   }
 

@@ -42,9 +42,11 @@ export const serve: CommandExecutor = async () => {
   );
 
   const config = getProjectConfig(cli.flags.project);
-  const env = (config.environmentFile
-    ? safeLoad(readFileSync(config.environmentFile, 'utf8'))
-    : {}) as Record<string, string>;
+  const env = (
+    config.environmentFile
+      ? safeLoad(readFileSync(config.environmentFile, 'utf8'))
+      : {}
+  ) as Record<string, string>;
   const emulator = getEmulator(config, {
     debug: cli.flags.verbose,
   });
@@ -58,8 +60,9 @@ export const serve: CommandExecutor = async () => {
 
   const dashboard = new Dashboard(emulator, functions);
 
+  const emP = emulator.start();
   dashboard.start();
-  await emulator.start();
+  await emP;
 
   const eventTriggerdFns = config.functions.filter(
     (f) => f.trigger && 'topic' in f.trigger
@@ -69,62 +72,8 @@ export const serve: CommandExecutor = async () => {
   );
 
   dashboard.pushSubscriptions = subscriptions;
-  // const md = await subscriptions[0].getMetadata();
-  // console.log(md);
 
   functions.forEach((fun) => fun.start());
-
-  // const tasks = new Listr([{
-  //   title: 'Start PubSub emulator',
-  //   task: (ctx, task) => emulator.start()
-  // }, {
-  //   title: 'Create PubSub triggers',
-  //   task: async () => {
-  // const eventTriggerdFns = config.functions.filter((f) =>
-  //   (f.trigger as Object).hasOwnProperty('topic')
-  // ) as FunctionConfig<PubSubTrigger>[];
-
-  // for (const fn of eventTriggerdFns) {
-  //   await createPushSubscription(config, fn);
-  // }
-  //   },
-  // }, {
-  //   title: 'Serve Functions',
-  //   task: (ctx, task) => {
-  //     if (!config.functions.length) {
-  //       return;
-  //     }
-
-  //     return new Listr(config.functions.map((fc, index) => ({
-  //       title: fc.name,
-  //       task: () => {
-  //         const func = new LocalFunction(fc, {
-  //           debug: cli.flags.hasOwnProperty('verbose'),
-  //           env,
-  //           port: 8080 + index,
-  //         });
-  //         return func.start();
-  //       }
-  //     })), { concurrent: true, exitOnError: false })
-  //   },
-  //   skip: () => config.functions.length === 0,
-  // }], { renderer: VerboseRenderer, });
-
-  // try {
-  //   await new Promise((resolve, reject) => {
-  //     const taskPromise = tasks.run();
-  //     process.on('SIGINT', async () => {
-  //       await taskPromise.then(resolve, reject);
-  //     });
-  //   });
-  // } catch (error) {
-  //   console.error(chalk.red('Something went terribly wrong!'));
-  //   console.error(chalk.red(inspect(error)));
-  // } finally {
-  //   console.log(chalk.grey('Stopping the PubSub emulator...'));
-  //   await emulator.stop();
-  //   console.log(chalk.green('Have a good one!'));
-  // }
 };
 
 /*****************************************************************************/

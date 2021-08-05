@@ -1,15 +1,15 @@
 import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
-import { Subscription } from '@google-cloud/pubsub';
+import { Subscription as PubSubSubscription } from '@google-cloud/pubsub';
 import blessed from 'blessed';
 import contrib from 'blessed-contrib';
-import { merge } from 'rxjs';
+import { merge, Observable } from 'rxjs';
 
 import { LocalFunction } from './local-function';
+import { ProcessLog } from './process-log';
+import { ProcessTable } from './process-table';
 
 export class Dashboard {
   private screen = blessed.screen();
-
-  private processTable?: contrib.Widgets.TableElement;
   private subscriptionTable?: contrib.Widgets.TableElement;
 
   constructor(
@@ -19,83 +19,66 @@ export class Dashboard {
 
   public start() {
     const grid = new contrib.grid({
-      rows: 2 + Math.ceil(this.functions.length / 2),
+      rows: 1 + Math.ceil(this.functions.length / 2),
       cols: 2,
       screen: this.screen,
     });
+
     this.screen.key(['escape', 'q', 'C-c'], async (ch, key) => {
       await this.stop();
     });
-    this.screen.render();
 
-    this.processTable = grid.set(0, 0, 1, 1, contrib.table, {
+    const processTableEl = grid.set(0, 0, 1, 1, contrib.table, {
       border: { type: 'line', fg: 'cyan' },
       columnSpacing: 4,
       columnWidth: [16, 8, 4],
       fg: 'grey',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      interactive: false as any,
       label: ' Active Processes ',
-    } as contrib.Widgets.TableOptions);
 
-    merge(
-      this.emulator.state$,
-      ...this.functions.map((f) => f.state)
-    ).subscribe(() => {
-      const data = this.functions.map((fn) => [
-        fn.name,
-        fn.currentState,
-        `${fn.port}`,
-      ]);
-      data.unshift([
-        'PubSub Emulator',
-        this.emulator.currentState,
-        `${this.emulator.port || '----'}`,
-      ]);
-      this.processTable?.setData({
-        data,
-        headers: ['Process', 'State', 'Port'],
-      });
+      keys: true,
+      selectedBg: 'blue',
+      selectedFg: 'white',
+      vi: true,
+    } as contrib.Widgets.TableOptions);
+    const processTable = new ProcessTable(
+      processTableEl,
+      this.emulator,
+      this.functions
+    );
+
+    const processLogEl = grid.set(
+      1,
+      0,
+      1,
+      2,
+      contrib.log
+    ) as contrib.Widgets.LogElement;
+    const processLog = new ProcessLog(processLogEl);
+
+    processTable.activeProcess$.subscribe((ps) => {
+      processLog.process = ps;
+    });
+
+    merge(processTable.updated$, processLog.updated$).subscribe(() => {
       this.screen.render();
     });
 
     this.subscriptionTable = grid.set(0, 1, 1, 1, contrib.table, {
       border: { type: 'line', fg: 'cyan' },
-      // columnSpacing: 4,
-      columnWidth: [12, 30],
+      columnWidth: [12, 60],
       fg: 'grey',
       interactive: false as any,
-      // keys: true,
       label: ' Push Subscriptions ',
-      // vi: true,
     } as contrib.Widgets.TableOptions);
     this.subscriptionTable.setData({
       data: [],
       headers: ['Topic', 'Push URL'],
     });
 
-    const emulatorLog = grid.set(1, 0, 1, 2, contrib.log, {
-      label: ' PubSub Emulator ',
-    } as contrib.Widgets.LogOptions);
-    this.emulator.log.on('data', (chunk: Buffer) => {
-      emulatorLog.log(chunk.toString());
-    });
-
-    this.functions.forEach((f, idx) => {
-      const row = 2 + Math.floor(idx / 2);
-      const column = (idx + 2) % 2;
-      const functionLog = grid.set(row, column, 1, 1, contrib.log, {
-        label: ` ${f.name} `,
-      } as contrib.Widgets.LogOptions);
-      f.log.on('data', (chunk: Buffer) => {
-        functionLog.log(chunk.toString());
-      });
-    });
-
     this.screen.render();
   }
 
-  public set pushSubscriptions(subscriptions: Subscription[]) {
+  public set pushSubscriptions(subscriptions: PubSubSubscription[]) {
     this.subscriptionTable?.setData({
       headers: ['Topic', 'URL'],
       data: subscriptions.map((s) => [
@@ -115,4 +98,8 @@ export class Dashboard {
       this.screen.destroy();
     }, 500);
   }
+}
+
+export interface DashboardElementController {
+  updated$: Observable<void>;
 }
