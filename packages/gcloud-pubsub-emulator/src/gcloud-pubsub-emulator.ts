@@ -101,6 +101,9 @@ export default class GooglePubSubEmulator {
 
     const pid = this.cmd.pid;
     return new Promise<void>((resolve, reject) => {
+      if (!pid) {
+        return reject('Could not kill emulator: no pid.');
+      }
       kill(pid, 'SIGINT', (e) => {
         if (e) {
           return reject(e);
