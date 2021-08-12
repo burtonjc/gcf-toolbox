@@ -26,7 +26,7 @@ export const depolyFunction = (config: FunctionConfig) => {
     args.push(`--source=${config.source}`);
   }
 
-  if (!config.trigger || config.trigger === 'http') {
+  if (!config.trigger) {
     args.push('--trigger-http');
   } else if ('topic' in config.trigger) {
     args.push(`--trigger-topic=${config.trigger.topic}`);

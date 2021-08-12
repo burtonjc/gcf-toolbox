@@ -25,6 +25,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:watch": "tsc -w",
     "clean": "rm -rf lib",
     "prebuild": "npm run clean",
     "prepare": "npm run build",
@@ -35,7 +36,10 @@
   },
   "dependencies": {
     "execa": "^3.2.0",
-    "rxjs": "^6.6.7",
+    "rxjs": "^7.3.0",
     "tree-kill": "^1.2.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.3.5"
   }
 }

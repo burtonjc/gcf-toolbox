@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 
 import execa = require('execa');
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
 import kill from 'tree-kill';
 
 import {
@@ -49,10 +49,14 @@ export interface EmulatorOptions {
 }
 
 export default class GooglePubSubEmulator {
+  public readonly name = 'PubSub Emulator';
+
   private cmd?: execa.ExecaChildProcess;
   private run?: Promise<void>;
   private _error$ = new BehaviorSubject<Error | null>(null);
   private _state$ = new BehaviorSubject(EmulatorStates.Stopped);
+  private _port?: number;
+  private _log$ = new ReplaySubject<string>();
 
   constructor(private options: EmulatorOptions = {}) {
     if (options.dataDir && !existsSync(options.dataDir)) {
@@ -69,6 +73,10 @@ export default class GooglePubSubEmulator {
       this.cmd.stdout && this.cmd.stdout.pipe(process.stdout);
       this.cmd.stderr && this.cmd.stderr.pipe(process.stderr);
     }
+
+    this.cmd.all?.on('data', (chunk: Buffer) => {
+      this._log$.next(chunk.toString());
+    });
 
     this.run = this.cmd
       .catch((error) => {
@@ -96,14 +104,15 @@ export default class GooglePubSubEmulator {
 
   public stop() {
     if (!this.cmd) {
-      return Promise.resolve(this._state$.getValue());
+      return Promise.resolve();
     }
 
     const pid = this.cmd.pid;
     return new Promise<void>((resolve, reject) => {
       if (!pid) {
-        return reject('Could not kill emulator: no pid.');
+        return reject('Unable to stop emulator: no pid.');
       }
+
       kill(pid, 'SIGINT', (e) => {
         if (e) {
           return reject(e);
@@ -111,9 +120,9 @@ export default class GooglePubSubEmulator {
 
         resolve();
       });
-    })
-      .then(() => this.run)
-      .then(() => this._state$.getValue());
+    }).then(() => {
+      this.run;
+    });
   }
 
   public get error$() {
@@ -122,6 +131,18 @@ export default class GooglePubSubEmulator {
 
   public get state$() {
     return this._state$.asObservable();
+  }
+
+  public get currentState() {
+    return this._state$.value;
+  }
+
+  public get port() {
+    return this._port;
+  }
+
+  public get log$() {
+    return this._log$.asObservable();
   }
 
   private buildCommandParams(options: EmulatorOptions) {
@@ -173,13 +194,17 @@ export default class GooglePubSubEmulator {
         return reject(new EmulatorNotInitializedError());
       }
 
-      const waitForStarted = (data: Buffer) => {
-        if (data.toString().includes('Server started, listening on ')) {
+      const waitForStarted = (dataBuf: Buffer) => {
+        const data = dataBuf.toString();
+        const match = data.match(/Server started, listening on (\d+)/);
+
+        if (match && match[1]) {
+          this._port = parseInt(match[1]);
           this.cmd && this.cmd.all && this.cmd.all.off('data', waitForStarted);
           return resolve();
         }
 
-        if (data.toString().includes('java.io.IOException: Failed to bind')) {
+        if (data.includes('java.io.IOException: Failed to bind')) {
           this.cmd && this.cmd.all && this.cmd.all.off('data', waitForStarted);
           return reject(new PortAlreadyInUseError());
         }

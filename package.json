@@ -2,7 +2,8 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "build": "lerna exec -- npm run build",
+    "build:watch": "npx lerna run --parallel build:watch",
+    "build": "npx lerna run build",
     "format:check": "prettier **/*.{js,ts} --check",
     "format": "prettier **/*.{js,ts} --write",
     "lint": "eslint . --ext .ts",

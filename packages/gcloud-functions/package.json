@@ -27,6 +27,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:watch": "tsc -w",
     "clean": "rm -rf lib",
     "prebuild": "npm run clean",
     "prepare": "npm run build",
@@ -37,5 +38,8 @@
   },
   "dependencies": {
     "execa": "^3.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.3.5"
   }
 }

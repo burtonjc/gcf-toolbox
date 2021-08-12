@@ -1,12 +1,9 @@
 import { readFileSync } from 'fs';
-import { inspect } from 'util';
 
 import GooglePubSubEmulator from '@gcf-tools/gcloud-pubsub-emulator';
 import { PubSub } from '@google-cloud/pubsub';
 import chalk from 'chalk';
-import execa from 'execa';
 import { safeLoad } from 'js-yaml';
-import Listr from 'listr';
 import meow from 'meow';
 
 import { CommandExecutor } from '../../helpers/command.helper';
@@ -16,9 +13,8 @@ import {
   ProjectConfig,
   PubSubTrigger,
 } from '../../helpers/config.helper';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const VerboseRenderer = require('listr-verbose-renderer');
+import { Dashboard } from './dashboard';
+import { LocalFunction } from './local-function';
 
 export const serve: CommandExecutor = async () => {
   const cli = meow(
@@ -40,104 +36,57 @@ export const serve: CommandExecutor = async () => {
       flags: {
         help: { alias: '-h' },
         project: { alias: '-p' },
-        verbose: { alias: '-v' },
+        verbose: { alias: '-v', default: false },
       },
     }
   );
 
   const config = getProjectConfig(cli.flags.project);
-  const env = config.environmentFile
-    ? (safeLoad(readFileSync(config.environmentFile, 'utf8')) as {
-        [key: string]: string;
-      })
-    : {};
-  console.log('env:', env);
+  const env = (
+    config.environmentFile
+      ? safeLoad(readFileSync(config.environmentFile, 'utf8'))
+      : {}
+  ) as Record<string, string>;
   const emulator = getEmulator(config, {
     debug: cli.flags.verbose,
   });
-  const tasks = new Listr(
-    [
-      {
-        title: 'Start PubSub emulator',
-        task: (ctx, task) => emulator.start(),
-      },
-      {
-        title: 'Create PubSub triggers',
-        task: async () => {
-          const eventTriggerdFns = config.functions.filter(
-            (f) => (f as FunctionConfig<PubSubTrigger>).trigger.topic
-          ) as FunctionConfig<PubSubTrigger>[];
+  const functions = config.functions.map((fc, index) => {
+    return new LocalFunction(fc, {
+      debug: cli.flags.verbose,
+      env,
+      port: 8080 + index,
+    });
+  });
 
-          for (const fn of eventTriggerdFns) {
-            await createPushSubscription(config, fn);
-          }
-        },
-      },
-      {
-        title: 'Serve Functions',
-        task: (ctx, task) => {
-          if (!config.functions.length) {
-            return;
-          }
+  const dashboard = new Dashboard(emulator, functions);
 
-          return new Listr(
-            config.functions.map((f, index) => ({
-              title: f.name,
-              task: () => {
-                let args = [
-                  'functions-framework',
-                  `--target=${f.entryPoint || f.name}`,
-                  `--port=${8080 + index}`,
-                ];
+  const emP = emulator.start();
+  dashboard.start();
+  await emP;
 
-                if (f.source) {
-                  args = [...args, `--source=${f.source}`];
-                }
-
-                if (f.trigger !== 'http') {
-                  args = [...args, `--signature-type=event`];
-                }
-
-                return execa('npx', args, { all: true, env }).all;
-              },
-            })),
-            { concurrent: true, exitOnError: false }
-          );
-        },
-        skip: () => config.functions.length === 0,
-      },
-    ],
-    { renderer: VerboseRenderer }
+  const eventTriggerdFns = config.functions.filter(
+    (f) => f.trigger && 'topic' in f.trigger
+  ) as FunctionConfig<PubSubTrigger>[];
+  const subscriptions = await Promise.all(
+    eventTriggerdFns.map((fc) => createPushSubscription(config, fc))
   );
 
-  try {
-    await new Promise((resolve, reject) => {
-      const taskPromise = tasks.run();
-      process.on('SIGINT', async () => {
-        await taskPromise.then(resolve, reject);
-      });
-    });
-  } catch (error) {
-    console.error(chalk.red('Something went terribly wrong!'));
-    console.error(chalk.red(inspect(error)));
-  } finally {
-    console.log(chalk.grey('Stopping the PubSub emulator...'));
-    await emulator.stop();
-    console.log(chalk.green('Have a good one!'));
-  }
+  dashboard.pushSubscriptions = subscriptions;
+
+  functions.forEach((fun) => fun.start());
 };
 
 /*****************************************************************************/
 
-let emulator: GooglePubSubEmulator;
+let __emulator__: GooglePubSubEmulator;
 const getEmulator = (config: ProjectConfig, options?: { debug?: boolean }) => {
-  if (!emulator) {
-    emulator = new GooglePubSubEmulator({
+  if (!__emulator__) {
+    __emulator__ = new GooglePubSubEmulator({
       debug: options && options.debug,
     });
   }
 
-  return emulator;
+  return __emulator__;
 };
 
 const createPushSubscription = async (
@@ -166,6 +115,8 @@ const createPushSubscription = async (
   } else {
     await subscription.create({ pushEndpoint });
   }
+
+  return subscription;
 };
 
 export default serve;

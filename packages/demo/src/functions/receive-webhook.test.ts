@@ -32,8 +32,8 @@ describe('Receive webhook', () => {
 
     const watcher = await watchForMessages(TOPIC_NAME);
     await receiveWebhook(
-      (req as unknown) as Request,
-      (res as unknown) as Response,
+      req as unknown as Request,
+      res as unknown as Response,
       next
     );
     const messages = (await watcher.stop()).filter((m) => {
@@ -63,7 +63,7 @@ describe('Receive webhook', () => {
     const next = jest.fn();
 
     const watcher = await watchForMessages(TOPIC_NAME);
-    await receiveWebhook(req as Request, (res as unknown) as Response, next);
+    await receiveWebhook(req as Request, res as unknown as Response, next);
     const messages = (await watcher.stop()).filter((m) => {
       const attributes = m.attributes as { [key: string]: string };
       return attributes.transactionId === transactionId;

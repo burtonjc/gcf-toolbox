@@ -13,8 +13,6 @@ export interface EventTrigger {
   resource: string;
 }
 
-export type HttpTrigger = 'http';
-
 export interface PubSubTrigger {
   topic: string;
 }
@@ -25,9 +23,9 @@ export interface StorageTrigger {
 
 export type TriggerType =
   | EventTrigger
-  | HttpTrigger
   | PubSubTrigger
-  | StorageTrigger;
+  | StorageTrigger
+  | undefined;
 
 interface RawFunctionConfig<T extends TriggerType = TriggerType> {
   entryPoint?: string;
@@ -55,7 +53,7 @@ export interface FunctionConfig<T extends TriggerType = TriggerType>
   extends RawFunctionConfig {
   environmentFile?: string;
   name: string;
-  trigger: T; // Make this not optional in code for convenience
+  trigger: T;
 }
 
 export class ProjectConfig {
@@ -74,7 +72,7 @@ export class ProjectConfig {
           {
             environmentFile: this.config.environmentFile,
             name: key,
-            trigger: 'http',
+            trigger: undefined,
           },
           this.config.functions[key]
         )

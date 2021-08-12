@@ -21,7 +21,7 @@ export const executeSubCommand = async (cli: Result, dir: string) => {
     if (error.code === 'MODULE_NOT_FOUND') {
       console.log(`
         \r  ${chalk.red(`Error: unknown command "${chalk.bold(command)}"`)}
-        \r  ${chalk.grey(`Run 'tasks --help' for usage`)}.
+        \r  ${chalk.grey(`Run 'npx giccup --help' for usage`)}.
       `);
     } else {
       throw error;
