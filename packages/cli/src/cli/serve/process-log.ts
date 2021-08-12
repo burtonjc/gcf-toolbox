@@ -29,7 +29,8 @@ export class ProcessLog implements DashboardElementController {
   get updated$(): Observable<void> {
     return this.#process$.asObservable().pipe(
       map((ps) => {
-        (this.logElement as any).logLines = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (this.logElement as any).logLines = []; // TODO: PR to fix this typing
         this.logElement.setItems([]);
         if (ps) {
           this.logElement.setLabel(` ${ps.name} Log `);
