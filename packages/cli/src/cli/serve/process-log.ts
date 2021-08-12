@@ -28,7 +28,6 @@ export class ProcessLog implements DashboardElementController {
 
   get updated$(): Observable<void> {
     return this.#process$.asObservable().pipe(
-      // tap((ps) => {
       map((ps) => {
         (this.logElement as any).logLines = [];
         this.logElement.setItems([]);

@@ -35,6 +35,7 @@ export class Dashboard {
       fg: 'grey',
       label: ' Active Processes ',
 
+      mouse: true,
       keys: true,
       selectedBg: 'blue',
       selectedFg: 'white',
@@ -46,13 +47,22 @@ export class Dashboard {
       this.functions
     );
 
-    const processLogEl = grid.set(
-      1,
-      0,
-      1,
-      2,
-      contrib.log
-    ) as contrib.Widgets.LogElement;
+    const processLogEl = grid.set(1, 0, 1, 2, contrib.log, {
+      mouse: true,
+      keys: true,
+      scrollable: true,
+      alwaysScroll: true,
+      baseLimit: 10,
+      bufferLength: Infinity,
+      scrollbar: {
+        ch: ' ',
+        inverse: true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any, // TODO: PR to fix these typings
+      interactive: true,
+    } as contrib.Widgets.LogOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (processLogEl as any).interactive = true; // TODO: PR to fix these typings
     const processLog = new ProcessLog(processLogEl);
 
     processTable.activeProcess$.subscribe((ps) => {
